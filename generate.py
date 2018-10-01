@@ -5,7 +5,7 @@ import random
 # Path to the background image
 background_path = 'data/refugee-camp-before-data.jpg'
 # Path to foreground pattern
-house_path = 'data/casa5.jpg'
+house_path = 'data/casa1.jpg'
 # Mininum and maximum number of rows and columns
 # battery_boundaries = [[3, 7], [2, 5]]
 
@@ -48,6 +48,7 @@ for i in range(n_outputs):
         mask[x: x + house.shape[0], y: y + house.shape[1]] = 255
 
         pass
+
     outpath_ = background_path.split('.')
     outpath = ''.join(outpath_[:-1]) + '-out'+str(i) + '.' + outpath_[-1]
     maskpath = ''.join(outpath_[:-1]) + '-out'+ str(i) + '-mask' + '.' + outpath_[-1]
