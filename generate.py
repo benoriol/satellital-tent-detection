@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import random
-
+# KK prova
 # Path to the background image
 #hola
 background_path = 'data/refugee-camp-before-data.jpg'
