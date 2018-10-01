@@ -3,6 +3,7 @@ import numpy as np
 import random
 
 # Path to the background image
+#hola
 background_path = 'data/refugee-camp-before-data.jpg'
 # Path to foreground pattern
 house_path = 'data/casa5.jpg'
