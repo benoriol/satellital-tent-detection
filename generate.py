@@ -19,7 +19,7 @@ n_outputs = 15
 
 background = cv2.imread(background_path)
 house = cv2.imread(house_path)
-
+# soc la mar
 
 
 for i in range(n_outputs):
@@ -55,5 +55,3 @@ for i in range(n_outputs):
     cv2.imwrite(maskpath, mask)
 
 pass
-
-
