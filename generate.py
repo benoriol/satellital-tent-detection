@@ -13,13 +13,12 @@ house_path = 'data/casa5.jpg'
 # ncols = random.choice(range(battery_boundaries[1][0], battery_boundaries[1][1]+1))
 
 
-battery_shape = [3, 7]
-n_houses = 15
-n_outputs = 15
+battery_shape = [3, 7] # shape of the houses disposition
+n_houses = 15 # number of houses per battery
+n_outputs = 15 # number of house dispositions
 
 background = cv2.imread(background_path)
 house = cv2.imread(house_path)
-# soc la mar
 
 
 for i in range(n_outputs):
@@ -27,6 +26,7 @@ for i in range(n_outputs):
     output = background.copy()
     mask = np.zeros((background.shape[0], background.shape[1]), np.uint8)
 
+    # start of battery (in pixels)
     start_x = random.choice(range(0, background.shape[0] - battery_shape[0]*house.shape[0]))
     start_y = random.choice(range(0, background.shape[1] - battery_shape[1]*house.shape[1]))
 
@@ -40,18 +40,41 @@ for i in range(n_outputs):
         positions.append(p)
         possible_positions.remove(p)
 
+        houses = np.zeros((background.shape[0], background.shape[1], 3), np.uint8)
     for p in positions:
         x = start_x + house.shape[0]*p[0]
         y = start_y + house.shape[1]*p[1]
 
-        output[x: x+house.shape[0], y: y+house.shape[1]] = house
-        mask[x: x + house.shape[0], y: y + house.shape[1]] = 255
+        houses[x: x+house.shape[0], y: y+house.shape[1], :] = house
+
+        # for i in range(0, background.shape[0]):
+        #     for j in range(0, background.shape[1]):
+        #         if res[i,j,1] == 0 and res[i,j,2] == 0 and res[i,j,3] == 0:
+        #             output[i, j, :] = background[i, j, :]
+        #             mask[i, j] = 0
+        #         else:
+        #             output[i, j, :] = house[i, j, :]
+        #             mask[i, j] = 255
+
+        # output[x: x+house.shape[0], y: y+house.shape[1]] = house
+        # mask[x: x + house.shape[0], y: y + house.shape[1]] = 255
 
         pass
+
+    M = cv2.getRotationMatrix2D((houses.shape[0]/2, houses.shape[1]/2), 45, 1)
+    rotated = cv2.warpAffine(houses, M, (background.shape[0], background.shape[1]))
+    cv2.imshow('houses', houses)
+    cv2.imshow('rotated', rotated)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    limit_x = (0,0)
+    limit_y = (0,0)
+
+
     outpath_ = background_path.split('.')
     outpath = ''.join(outpath_[:-1]) + '-out'+str(i) + '.' + outpath_[-1]
-    maskpath = ''.join(outpath_[:-1]) + '-out'+ str(i) + '-mask' + '.' + outpath_[-1]
+    #maskpath = ''.join(outpath_[:-1]) + '-out'+ str(i) + '-mask' + '.' + outpath_[-1]
     cv2.imwrite(outpath, output)
-    cv2.imwrite(maskpath, mask)
+    #cv2.imwrite(maskpath, mask)
 
 pass
