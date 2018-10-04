@@ -40,35 +40,22 @@ for i in range(n_outputs):
         positions.append(p)
         possible_positions.remove(p)
 
-        houses = np.zeros((background.shape[0], background.shape[1], 3), np.uint8)
+    houses = np.zeros((battery_shape[0]*house.shape[0], battery_shape[1]*house.shape[1], 3), np.uint8)
     for p in positions:
-        x = start_x + house.shape[0]*p[0]
-        y = start_y + house.shape[1]*p[1]
+        x = house.shape[0]*p[0]
+        y = house.shape[1]*p[1]
 
         houses[x: x+house.shape[0], y: y+house.shape[1], :] = house
-
-        # for i in range(0, background.shape[0]):
-        #     for j in range(0, background.shape[1]):
-        #         if res[i,j,1] == 0 and res[i,j,2] == 0 and res[i,j,3] == 0:
-        #             output[i, j, :] = background[i, j, :]
-        #             mask[i, j] = 0
-        #         else:
-        #             output[i, j, :] = house[i, j, :]
-        #             mask[i, j] = 255
-
-        # output[x: x+house.shape[0], y: y+house.shape[1]] = house
-        # mask[x: x + house.shape[0], y: y + house.shape[1]] = 255
-
         pass
 
-    M = cv2.getRotationMatrix2D((houses.shape[0]/2, houses.shape[1]/2), 45, 1)
+    rotation = random.choice(range(-90, 90))
+    M = cv2.getRotationMatrix2D((0,0), rotation, 1)
+    M[:,2] = np.array([houses.shape[0], houses.shape[1]])
     rotated = cv2.warpAffine(houses, M, (background.shape[0], background.shape[1]))
-    cv2.imshow('houses', houses)
+    #cv2.imshow('houses', houses)
     cv2.imshow('rotated', rotated)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    limit_x = (0,0)
-    limit_y = (0,0)
 
 
     outpath_ = background_path.split('.')
