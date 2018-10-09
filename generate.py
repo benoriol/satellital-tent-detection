@@ -5,15 +5,16 @@ import random
 # Path to the background image
 background_path = 'data/refugee-camp-before-data.jpg'
 # Path to foreground pattern
-house_path = 'data/casa5.jpg'
+house_path = 'data/casa1.jpg'
+house_mask_path = 'data/casa1-mask.png'
 
-battery_shape = [3, 7] # shape of the houses disposition
-n_houses = 15 # number of houses per battery
+battery_shape = [3, 3] # shape of the houses disposition
+n_houses = 8 # number of houses per battery
 n_outputs = 15 # number of house dispositions
 
 background = cv2.imread(background_path)
 house = cv2.imread(house_path)
-
+house_mask = cv2.imread(house_mask_path, cv2.IMREAD_GRAYSCALE)
 
 for i in range(n_outputs):
 
@@ -39,7 +40,7 @@ for i in range(n_outputs):
         y = house.shape[1]*p[1]
 
         houses[x: x+house.shape[0], y: y+house.shape[1], :] = house
-        _mask[x: x+house.shape[0], y: y+house.shape[1]] = 255
+        _mask[x: x+house.shape[0], y: y+house.shape[1]] = house_mask
 
     rotation = random.choice(range(-90, 90))
 
@@ -52,6 +53,10 @@ for i in range(n_outputs):
     # Affine transformation
     rotated = cv2.warpAffine(houses, M, (background.shape[0], background.shape[1]))
     _mask_rotated = cv2.warpAffine(_mask, M, (background.shape[0], background.shape[1]))
+
+    # cv2.imshow('cut rot', rotated)
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
 
     # Getting the part o the image with houses
     x0 = 0
@@ -80,17 +85,8 @@ for i in range(n_outputs):
         if y0 != 0 and y1 != _mask_rotated.shape[1]-1 and x0 != 0 and x1 != _mask_rotated.shape[0]-1:
             break
 
-
     cut_rotated = rotated[x0:x1, y0:y1]
     cut__mask = _mask_rotated[x0:x1, y0:y1]
-
-    cv2.imshow('cut rot', cut_rotated)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
-
-    cv2.imshow('output', cut__mask)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
 
     # start of battery (in pixels)
     start_x = random.choice(range(0, background.shape[0] - cut_rotated.shape[0]))
@@ -104,20 +100,24 @@ for i in range(n_outputs):
     for i in range(output.shape[2]):
         output[:, :, i] = output[:, :, i] * (1-mask/255)
 
+    for i in range(houses_big.shape[2]):
+        houses_big[:, :, i] = houses_big[:, :, i] * (mask/255)
+
     output = output + houses_big
 
-    cv2.imshow('output final', output)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+    # cv2.imshow('output final', output)
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
 
 
     outpath_ = background_path.split('.')
     folder = outpath_[0].split('/')
     print(folder)
-    folder[0] + ''
+
     outpath = ''.join(outpath_[:-1]) + '-out'+str(i) + '.' + outpath_[-1]
     maskpath = ''.join(outpath_[:-1]) + '-out'+ str(i) + '-mask' + '.' + outpath_[-1]
-    #cv2.imwrite(outpath, output)
-    #cv2.imwrite(maskpath, mask)
+
+    cv2.imwrite(outpath, output)
+    cv2.imwrite(maskpath, mask)
 
 pass
