@@ -16,7 +16,7 @@ background = cv2.imread(background_path)
 house = cv2.imread(house_path)
 house_mask = cv2.imread(house_mask_path, cv2.IMREAD_GRAYSCALE)
 
-for i in range(n_outputs):
+for n in range(n_outputs):
 
     output = background.copy()
     mask = np.zeros((background.shape[0], background.shape[1]), np.uint8)
@@ -109,15 +109,15 @@ for i in range(n_outputs):
     # cv2.waitKey()
     # cv2.destroyAllWindows()
 
-
     outpath_ = background_path.split('.')
-    folder = outpath_[0].split('/')
-    print(folder)
+    outpath = ''.join(outpath_[:-1]) + '-out' + str(n) + '.' + outpath_[-1]
+    maskpath = ''.join(outpath_[:-1]) + '-out' + str(n) + '-mask' + '.' + \
+               outpath_[-1]
 
-    outpath = ''.join(outpath_[:-1]) + '-out'+str(i) + '.' + outpath_[-1]
-    maskpath = ''.join(outpath_[:-1]) + '-out'+ str(i) + '-mask' + '.' + outpath_[-1]
+    print(outpath)
 
     cv2.imwrite(outpath, output)
     cv2.imwrite(maskpath, mask)
+
 
 pass
