@@ -5,6 +5,7 @@
 
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 
@@ -108,7 +109,7 @@ class Autoencoder(nn.Module):
 
 if __name__ == '__main__':
 
-    N_EPOCHS = 1
+    N_EPOCHS = 5
 
     BATCH_SIZE = 5
 
@@ -116,21 +117,37 @@ if __name__ == '__main__':
 
     autoenc = Autoencoder()
 
+    loss_mse = nn.MSELoss()
+
+    optimizer = optim.SGD(autoenc.parameters(), lr=0.01, momentum=0.9)
+
     for e in range(N_EPOCHS):
+        print('epoch n: ', e)
+
         n = 0
-        batch_ = []
+        batch = []
         for i, d in enumerate(data):
-            batch_.append(d)
-            if (i+1)%BATCH_SIZE == 0:
+
+            batch.append(d)
+            if (i+1) % BATCH_SIZE == 0:
+
+                print('new batch')
                 src_batch = torch.empty(BATCH_SIZE, d[0].size()[0], d[0].size()[1], d[0].size()[2])
-                print('src', src_batch.size())
-
                 tgt_batch = torch.empty(BATCH_SIZE, d[1].size()[0], d[1].size()[1], d[1].size()[2])
-                print('hola')
-                # for j, x in enumerate(batch_):
-                #     src_batch[j] = x[0]
-                #     tgt_batch[j] = x[1]
+                
+                for j, x in enumerate(batch):
+                    src_batch[j] = x[0]
+                    tgt_batch[j] = x[1]
 
-            # print('src', src_batch.size())
+                prediction = autoenc(src_batch)
+
+                loss = loss_mse(tgt_batch, prediction)
+
+                loss.backward()
+
+                optimizer.step()
+
+                batch = []
 
 
+        
