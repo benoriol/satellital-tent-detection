@@ -103,30 +103,22 @@ for n in range(n_outputs):
     # cv2.waitKey()
     # cv2.destroyAllWindows()
 
-    # start of battery (in pixels)
+    # put rotated battery in background
     if background.shape[0] - cut_rotated.shape[0] <= 0:
         big_range_x = [0, background.shape[0]]
         small_range_x = [0, background.shape[0]]
-        # print("big:", big_range_x[-1]-big_range_x[0]+1)
-        # print("small:", small_range_x[-1]-small_range_x[0]+1)
     else:
         start_x = random.choice(range(0, background.shape[0] - cut_rotated.shape[0]))
         big_range_x = [start_x, start_x+cut_rotated.shape[0]]
         small_range_x = [0, cut_rotated.shape[0]]
-        # print("big:", big_range_x[-1]-big_range_x[0]+1)
-        # print("small:", small_range_x[-1]-small_range_x[0]+1)
 
     if background.shape[1] - cut_rotated.shape[1] <= 0:
         big_range_y = [0, background.shape[1]]
         small_range_y = [0, background.shape[1]]
-        # print("big:", big_range_y[-1]-big_range_y[1]+1)
-        # print("small:", small_range_y[-1]-small_range_y[1]+1)
     else:
         start_y = random.choice(range(0, background.shape[1] - cut_rotated.shape[1]))
         big_range_y = [start_y, start_y+cut_rotated.shape[1]]
         small_range_y = [0, cut_rotated.shape[1]]
-        # print("big:", big_range_y[-1]-big_range_y[1]+1)
-        # print("small:", small_range_y[-1]-small_range_y[1]+1)
 
     output_mask[big_range_x[0]:big_range_x[1], big_range_y[0]:big_range_y[1]] = cut_mask[small_range_x[0]:small_range_x[1], small_range_y[0]:small_range_y[1]]
     houses_big = np.zeros((background.shape[0], background.shape[1], background.shape[2]), np.uint8)
@@ -136,6 +128,7 @@ for n in range(n_outputs):
     # cv2.waitKey()
     # cv2.destroyAllWindows()
 
+    # correct color
     for i in range(output.shape[2]):
         output[:, :, i] = output[:, :, i] * (1-output_mask/255)
 
