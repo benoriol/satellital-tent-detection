@@ -6,25 +6,55 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchvision
-import torchvision.transforms as transforms
 
-import torchvision.transforms as transforms
+import random
+
+# import torchvision
+# import torchvision.transforms as transforms
 
 import cv2
 from glob import glob
 
-def load_data():
-    data = []
+class DataLoader:
+    def __init__(self, pattern, shuffle=False):
 
-    for d in glob("data/refugee-camp-before-data-out*-mask.jpg"):
-        tgtim =torch.from_numpy(cv2.imread(d)/255).permute(2, 0, 1).float()
-        srcim = d.replace('-mask', '')
-        srcim = torch.from_numpy(cv2.imread(srcim)/255).permute(2, 0, 1).float()
+        self.paths_iterator = (glob(pattern))
+        if shuffle:
+            random.shuffle(self.paths_iterator)
 
-        data.append([srcim, tgtim])
+        self.paths_iterator = iter(self.paths_iterator)
 
-    return (data)
+
+    def get_batch(self, size):
+
+        src_batch = -1
+        tgt_batch = -1
+
+
+        for i, x in enumerate(self.paths_iterator):
+
+            if i == 0:
+                tgt_batch = torch.from_numpy(cv2.imread(x, 0) / 255).float().unsqueeze(0).unsqueeze(0).float()
+
+                srcim = x.replace('-mask', '')
+                src_batch = torch.from_numpy(cv2.imread(srcim) / 255).permute(2, 0,1).unsqueeze(0).float()
+
+            else:
+
+                tgtim = torch.from_numpy(cv2.imread(x, 0) / 255).float().unsqueeze(0).unsqueeze(0)
+                srcim = x.replace('-mask', '')
+                srcim = torch.from_numpy(cv2.imread(srcim) / 255).permute(2, 0,1).unsqueeze(0).float()
+
+                tgt_batch = torch.cat((tgt_batch, tgtim))
+                src_batch = torch.cat((src_batch, srcim))
+
+            if i == size - 1:
+                break
+
+
+
+
+        return src_batch, tgt_batch
 
 class Autoencoder(nn.Module):
     def __init__(self):
@@ -35,119 +65,125 @@ class Autoencoder(nn.Module):
         self.upsample1 = nn.Upsample(size=(236, 353), mode='bilinear')
         self.upsample2 = nn.Upsample(size=(473, 706), mode='bilinear')
 
-        self.conv1_1 = nn.Conv2d(3, 16, 3)
-        self.conv1_2 = nn.Conv2d(16, 16, 3)
-        self.conv1_3 = nn.Conv2d(16, 16, 3)
+        self.conv1_1 = nn.Conv2d(3, 4, 3)
+        self.conv1_2 = nn.Conv2d(4, 4, 3)
+        self.conv1_3 = nn.Conv2d(4, 4, 3)
 
-        self.conv1_4 = nn.Conv2d(16, 32, 3)
-        self.conv1_5 = nn.Conv2d(32, 32, 3)
-        self.conv1_6 = nn.Conv2d(32, 32, 3)
+        self.conv1_4 = nn.Conv2d(4, 8, 3)
+        self.conv1_5 = nn.Conv2d(8, 8, 3)
+        self.conv1_6 = nn.Conv2d(8, 8, 3)
 
-        self.conv1_7 = nn.Conv2d(32, 64, 3)
-        self.conv1_8 = nn.Conv2d(64, 64, 3)
+        self.conv1_7 = nn.Conv2d(8, 16, 3)
+        self.conv1_8 = nn.Conv2d(16, 16, 3)
 
-        self.conv2_1 = nn.Conv2d(64, 32, 3)
-        self.conv2_2 = nn.Conv2d(32, 32, 3)
-        self.conv2_3 = nn.Conv2d(32, 32, 3)
+        self.conv2_1 = nn.Conv2d(16, 8, 3)
+        self.conv2_2 = nn.Conv2d(8, 8, 3)
+        self.conv2_3 = nn.Conv2d(8, 8, 3)
 
-        self.conv2_4 = nn.Conv2d(32, 16, 3)
-        self.conv2_5 = nn.Conv2d(16, 16, 3)
-        self.conv2_6 = nn.Conv2d(16, 1, 3)
+        self.conv2_4 = nn.Conv2d(8, 4, 3)
+        # self.conv2_4 = nn.Conv2d(4, 4, 3)
+        self.conv2_5 = nn.Conv2d(4, 4, 3)
+        self.conv2_6 = nn.Conv2d(4, 1, 3)
+
+        self.loss_mse = nn.MSELoss()
 
 
 
     def forward(self, inp):
 
-        print('inputsize', inp.size())
-
-
+        # print('input energy', self.loss_mse(inp, torch.zeros(inp.size())))
         # Encoder
         out = self.conv1_1(inp)
         out = self.relu(out)
         out = self.conv1_2(out)
+        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
+
         out = self.relu(out)
         out = self.conv1_3(out)
-        out = self.relu(out)
-
-        out = self.max22(out)
-
-        out = self.conv1_4(out)
-        out = self.relu(out)
-        out = self.conv1_5(out)
-        out = self.relu(out)
-        out = self.conv1_6(out)
-        out = self.relu(out)
-
-        out = self.max22(out)
-
-        out = self.conv1_7(out)
-        out = self.relu(out)
-        out = self.conv1_8(out)
-        out = self.relu(out)
-
-        out = self.upsample1(out)
-
-        out = self.conv2_1(out)
-        out = self.relu(out)
-        out = self.conv2_2(out)
-        out = self.relu(out)
-        out = self.conv2_3(out)
-        out = self.relu(out)
+        out1 = self.relu(out)
+        out = self.max22(out1)
+        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
+        # out = self.conv1_4(out)
+        # out = self.relu(out)
+        # out = self.conv1_5(out)
+        # out = self.relu(out)
+        # out = self.conv1_6(out)
+        # out = self.relu(out)
+        #
+        # out = self.max22(out)
+        #
+        # out = self.conv1_7(out)
+        # out = self.relu(out)
+        # out = self.conv1_8(out)
+        # out = self.relu(out)
+        #
+        # out = self.upsample1(out)
+        #
+        # out = self.conv2_1(out)
+        # out = self.relu(out)
+        # out = self.conv2_2(out)
+        # out = self.relu(out)
+        # out = self.conv2_3(out)
+        # out = self.relu(out)
 
         out = self.upsample2(out)
+        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
+        out1 = self.upsample2(out1)
 
+        out = torch.cat((out, out1), 1)
         out = self.conv2_4(out)
         out = self.relu(out)
+        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
         out = self.conv2_5(out)
         out = self.relu(out)
+        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
         out = self.conv2_6(out)
-        out = self.relu(out)
-
-        print('out size', out.size())
+        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
+        # out = self.relu(out)
+        # print('out size', out.size())
         return out
 
 
 if __name__ == '__main__':
 
-    N_EPOCHS = 5
+    N_EPOCHS = 15
+    BATCH_SIZE = 15
 
-    BATCH_SIZE = 5
+    pattern = "data/refugee-camp-before-data-out*-mask.jpg"
 
-    data = load_data()
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    autoenc = Autoencoder()
+    autoenc = Autoencoder().to(device)
 
     loss_mse = nn.MSELoss()
 
-    optimizer = optim.SGD(autoenc.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(autoenc.parameters(), lr=2000, momentum=0.5)
 
     for e in range(N_EPOCHS):
-        print('epoch n: ', e)
 
-        n = 0
-        batch = []
-        for i, d in enumerate(data):
+        data_loader = DataLoader(pattern, shuffle=True)
 
-            batch.append(d)
-            if (i+1) % BATCH_SIZE == 0:
+        src_batch, tgt_batch = data_loader.get_batch(BATCH_SIZE)
 
-                print('new batch')
-                src_batch = torch.empty(BATCH_SIZE, d[0].size()[0], d[0].size()[1], d[0].size()[2])
-                tgt_batch = torch.empty(BATCH_SIZE, d[1].size()[0], d[1].size()[1], d[1].size()[2])
-                
-                for j, x in enumerate(batch):
-                    src_batch[j] = x[0]
-                    tgt_batch[j] = x[1]
+        while type(src_batch) != type(-1):
 
-                prediction = autoenc(src_batch)
+            # print('tgt batch', tgt_batch.size())
+            # print('src batch', src_batch.size())
 
-                loss = loss_mse(tgt_batch, prediction)
+            prediction = autoenc(src_batch)
 
-                loss.backward()
+            loss = loss_mse(prediction, tgt_batch)
 
-                optimizer.step()
+            optimizer.zero_grad()
 
-                batch = []
+            loss.backward()
 
+            # optimizer.step()
 
-        
+            src_batch, tgt_batch = data_loader.get_batch(BATCH_SIZE)
+
+        print('epoch n: ' + str(e + 1) + '  loss:' + str(loss.item()))
+
+        cp_name = 'models/autoencoder-epoch' + str(e+1) + '.pt'
+        print('Saving checkpoint to: ' + cp_name)
+        torch.save(autoenc, cp_name)
