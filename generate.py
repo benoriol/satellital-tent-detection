@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import random
+from datetime import datetime
+import os
 
 # Path to the background image
 background_path = 'data/refugee-camp-before-data.jpg'
@@ -15,6 +17,9 @@ n_outputs = 10 # number of house dispositions
 background = cv2.imread(background_path)
 house = cv2.imread(house_path)
 house_mask = cv2.imread(house_mask_path, cv2.IMREAD_GRAYSCALE)
+
+dt = datetime.now()
+date = f'{dt:%Y%m%d%H%M}'
 
 for n in range(n_outputs):
 
@@ -137,14 +142,18 @@ for n in range(n_outputs):
 
     output = output + houses_big
 
-    cv2.imshow('output final', output)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+    # cv2.imshow('output final', output)
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
 
     outpath_ = background_path.split('.')
-    outpath = ''.join(outpath_[:-1]) + '-out' + str(n) + '.' + outpath_[-1]
-    maskpath = ''.join(outpath_[:-1]) + '-out' + str(n) + '-mask' + '.' + \
-               outpath_[-1]
+    data = outpath_[0].split('/')
+
+    if not os.path.exists(data[0] + '/' + date):
+        os.makedirs(data[0] + '/' + date)
+
+    outpath = data[0] + '/' + date + '/' + data[1] + '-out' + str(n) + '.' + outpath_[-1]
+    maskpath = data[0] + '/' + date + '/' + data[1] + '-out' + str(n) + '-mask'  + '.' + outpath_[-1]
 
     cv2.imwrite(outpath, output)
     cv2.imwrite(maskpath, output_mask)
