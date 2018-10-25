@@ -10,8 +10,8 @@ background_path = 'data/refugee-camp-before-data.jpg'
 house_path = 'data/casa1.jpg'
 house_mask_path = 'data/casa1-mask.png'
 
-battery_shape = [3, 10] # shape of the houses disposition
-n_houses = 20 # number of houses per battery
+battery_shape = [10, 15] # shape of the houses disposition
+n_houses = 80 # number of houses per battery
 n_outputs = 10 # number of house dispositions
 
 background = cv2.imread(background_path)
@@ -54,6 +54,7 @@ for n in range(n_outputs):
     diagonal = np.uint32(np.sqrt(houses.shape[0]*houses.shape[0] + houses.shape[1]*houses.shape[1]))+1
     aux_houses = np.zeros((diagonal*2, diagonal*2, 3), np.uint8)
     aux_mask = np.zeros((diagonal*2, diagonal*2), np.uint8)
+    # define initials to put houses in the middle of the auxiliar structures
     initials = [np.uint32(aux_houses.shape[0]/2-houses.shape[0]/2), np.uint32(aux_houses.shape[1]/2-houses.shape[1]/2)]
     aux_houses[initials[0]:(initials[0]+houses.shape[0]), initials[1]:(initials[1]+houses.shape[1])] = houses
     aux_mask[initials[0]:(initials[0]+houses.shape[0]), initials[1]:(initials[1]+houses.shape[1])] = mask
@@ -142,8 +143,8 @@ for n in range(n_outputs):
     if not os.path.exists(data[0] + '/' + date + '/output'):
         os.makedirs(data[0] + '/' + date + '/output')
 
-    outpath = data[0] + '/' + date + '/mask/' + data[1] + '-out' + str(n) + '.' + outpath_[-1]
-    maskpath = data[0] + '/' + date + '/output/' + data[1] + '-out' + str(n) + '-mask'  + '.' + outpath_[-1]
+    outpath = data[0] + '/' + date + '/output/' + data[1] + '-out' + str(n) + '.' + outpath_[-1]
+    maskpath = data[0] + '/' + date + '/mask/' + data[1] + '-out' + str(n) + '-mask'  + '.' + outpath_[-1]
 
     cv2.imwrite(outpath, output)
     cv2.imwrite(maskpath, output_mask)
