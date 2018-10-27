@@ -143,21 +143,30 @@ class Autoencoder(nn.Module):
         # print('out size', out.size())
         return out
 
+def showTensor(tensor):
+    tensor = tensor.permute(1, 2, 0)
+    tensor = tensor[0]
+    tensor = tensor.detach().numpy()
+
+    cv2.imshow('image', tensor)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
 
 if __name__ == '__main__':
 
-    N_EPOCHS = 15
-    BATCH_SIZE = 15
+    N_EPOCHS = 5
+    BATCH_SIZE = 1
 
     pattern = "data/refugee-camp-before-data-out*-mask.jpg"
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
+    print(device)
     autoenc = Autoencoder().to(device)
 
     loss_mse = nn.MSELoss()
 
-    optimizer = optim.SGD(autoenc.parameters(), lr=2000, momentum=0.5)
+    optimizer = optim.SGD(autoenc.parameters(), lr=0.5, momentum=0.5)
 
     for e in range(N_EPOCHS):
 
@@ -171,6 +180,10 @@ if __name__ == '__main__':
             # print('src batch', src_batch.size())
 
             prediction = autoenc(src_batch)
+
+            showTensor(tgt_batch[0])
+            showTensor(prediction[0])
+            quit()
 
             loss = loss_mse(prediction, tgt_batch)
 
