@@ -10,8 +10,8 @@ background_path = 'data/refugee-camp-before-data.jpg'
 house_path = 'data/casa1.jpg'
 house_mask_path = 'data/casa1-mask.png'
 
-battery_shape = [3, 10] # shape of the houses disposition
-n_houses = 20 # number of houses per battery
+battery_shape = [10, 15] # shape of the houses disposition
+n_houses = 80 # number of houses per battery
 n_outputs = 10 # number of house dispositions
 
 background = cv2.imread(background_path)
@@ -49,14 +49,12 @@ for n in range(n_outputs):
 
         houses[x: x+house.shape[0], y: y+house.shape[1], :] = house
         mask[x: x+house.shape[0], y: y+house.shape[1]] = house_mask
-    # cv2.imshow('hola', _mask)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
 
     #now we rotate
     diagonal = np.uint32(np.sqrt(houses.shape[0]*houses.shape[0] + houses.shape[1]*houses.shape[1]))+1
     aux_houses = np.zeros((diagonal*2, diagonal*2, 3), np.uint8)
     aux_mask = np.zeros((diagonal*2, diagonal*2), np.uint8)
+    # define initials to put houses in the middle of the auxiliar structures
     initials = [np.uint32(aux_houses.shape[0]/2-houses.shape[0]/2), np.uint32(aux_houses.shape[1]/2-houses.shape[1]/2)]
     aux_houses[initials[0]:(initials[0]+houses.shape[0]), initials[1]:(initials[1]+houses.shape[1])] = houses
     aux_mask[initials[0]:(initials[0]+houses.shape[0]), initials[1]:(initials[1]+houses.shape[1])] = mask
@@ -69,10 +67,6 @@ for n in range(n_outputs):
     # Affine transformation
     rotated = cv2.warpAffine(aux_houses, M, (diagonal*2, diagonal*2))
     mask_rotated = cv2.warpAffine(aux_mask, M, (diagonal*2, diagonal*2))
-
-    # cv2.imshow('rotated', rotated)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
 
     # Getting the part of the image with houses
     x0 = 0
@@ -104,10 +98,6 @@ for n in range(n_outputs):
     cut_rotated = rotated[x0:x1, y0:y1]
     cut_mask = mask_rotated[x0:x1, y0:y1]
 
-    # cv2.imshow('cut_mask', cut_mask)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
-
     # put rotated battery in background
     if background.shape[0] - cut_rotated.shape[0] <= 0:
         big_range_x = [0, background.shape[0]]
@@ -129,10 +119,6 @@ for n in range(n_outputs):
     houses_big = np.zeros((background.shape[0], background.shape[1], background.shape[2]), np.uint8)
     houses_big[big_range_x[0]:big_range_x[1], big_range_y[0]:big_range_y[1], :] = cut_rotated[small_range_x[0]:small_range_x[1], small_range_y[0]:small_range_y[1]]
 
-    # cv2.imshow('hola', houses_big)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
-
     # correct color
     for i in range(output.shape[2]):
         output[:, :, i] = output[:, :, i] * (1-output_mask/255)
@@ -142,7 +128,7 @@ for n in range(n_outputs):
 
     output = output + houses_big
 
-    # cv2.imshow('output final', output)
+    # cv2.imshow('hola', output)
     # cv2.waitKey()
     # cv2.destroyAllWindows()
 
@@ -152,8 +138,13 @@ for n in range(n_outputs):
     if not os.path.exists(data[0] + '/' + date):
         os.makedirs(data[0] + '/' + date)
 
-    outpath = data[0] + '/' + date + '/' + data[1] + '-out' + str(n) + '.' + outpath_[-1]
-    maskpath = data[0] + '/' + date + '/' + data[1] + '-out' + str(n) + '-mask'  + '.' + outpath_[-1]
+    if not os.path.exists(data[0] + '/' + date + '/mask'):
+        os.makedirs(data[0] + '/' + date + '/mask')
+    if not os.path.exists(data[0] + '/' + date + '/output'):
+        os.makedirs(data[0] + '/' + date + '/output')
+
+    outpath = data[0] + '/' + date + '/output/' + data[1] + '-out' + str(n) + '.' + outpath_[-1]
+    maskpath = data[0] + '/' + date + '/mask/' + data[1] + '-out' + str(n) + '-mask'  + '.' + outpath_[-1]
 
     cv2.imwrite(outpath, output)
     cv2.imwrite(maskpath, output_mask)
