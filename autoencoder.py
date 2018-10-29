@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 import random
-
+import time
 # import torchvision
 # import torchvision.transforms as transforms
 
@@ -87,6 +87,8 @@ class Autoencoder(nn.Module):
 
         self.loss_mse = nn.MSELoss()
 
+        self.sm2d = nn.Softmax2d()
+
 
 
     def forward(self, inp):
@@ -141,6 +143,7 @@ class Autoencoder(nn.Module):
         # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
         # out = self.relu(out)
         # print('out size', out.size())
+        out = self.sm2d(out)
         return out
 
 def showTensor(tensor):
@@ -155,8 +158,11 @@ def showTensor(tensor):
 
 if __name__ == '__main__':
 
-    N_EPOCHS = 5
-    BATCH_SIZE = 1
+    start = time.time()
+
+
+    N_EPOCHS = 20
+    BATCH_SIZE = 15
 
     pattern = "data/refugee-camp-before-data-out*-mask.jpg"
 
@@ -165,6 +171,7 @@ if __name__ == '__main__':
     autoenc = Autoencoder().to(device)
 
     loss_mse = nn.MSELoss()
+    # loss_mse = nn.BCELoss()
 
     optimizer = optim.SGD(autoenc.parameters(), lr=0.5, momentum=0.5)
 
@@ -181,9 +188,9 @@ if __name__ == '__main__':
 
             prediction = autoenc(src_batch)
 
-            showTensor(tgt_batch[0])
-            showTensor(prediction[0])
-            quit()
+            # showTensor(tgt_batch[0])
+            # showTensor(prediction[0])
+            # quit()
 
             loss = loss_mse(prediction, tgt_batch)
 
@@ -200,3 +207,7 @@ if __name__ == '__main__':
         cp_name = 'models/autoencoder-epoch' + str(e+1) + '.pt'
         print('Saving checkpoint to: ' + cp_name)
         torch.save(autoenc, cp_name)
+
+    end = time.time()
+
+    print ('Total time elapsed:', end-start)

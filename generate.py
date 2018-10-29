@@ -1,14 +1,24 @@
 import cv2
 import numpy as np
 import random
+<<<<<<< HEAD
 from datetime import datetime
 import os
 
+=======
+# KK prova
+>>>>>>> master
 # Path to the background image
+#hola
 background_path = 'data/refugee-camp-before-data.jpg'
 # Path to foreground pattern
 house_path = 'data/casa1.jpg'
+<<<<<<< HEAD
 house_mask_path = 'data/casa1-mask.png'
+=======
+# Mininum and maximum number of rows and columns
+# battery_boundaries = [[3, 7], [2, 5]]
+>>>>>>> master
 
 battery_shape = [10, 15] # shape of the houses disposition
 n_houses = 80 # number of houses per battery
@@ -132,6 +142,11 @@ for n in range(n_outputs):
     # cv2.waitKey()
     # cv2.destroyAllWindows()
 
+<<<<<<< HEAD
+=======
+        pass
+
+>>>>>>> master
     outpath_ = background_path.split('.')
     data = outpath_[0].split('/')
 
