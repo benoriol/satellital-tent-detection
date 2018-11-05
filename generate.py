@@ -6,10 +6,12 @@ import os
 
 
 # Path to the background image
+#hola
 background_path = 'data/refugee-camp-before-data.jpg'
 # Path to foreground pattern
 house_path = 'data/casa1.jpg'
 house_mask_path = 'data/casa1-mask.png'
+
 
 battery_shape = [10, 15] # shape of the houses disposition
 n_houses = 80 # number of houses per battery
