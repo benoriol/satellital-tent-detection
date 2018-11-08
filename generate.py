@@ -10,8 +10,8 @@ def generate(parameters):
     # Path to the background image
     background_path = 'data/refugee-camp-before-data.jpg'
     # Path to foreground pattern
-    house_path = 'data/original.png'
-    house_mask_path = 'data/mask.png'
+    house_path = 'data/casa1.png'
+    house_mask_path = 'data/casa1-mask.png'
 
     outpath_ = background_path.split('.')
     data = outpath_[0].split('/')
@@ -34,8 +34,14 @@ def generate(parameters):
     _house = cv2.imread(house_path)
     _house_mask = cv2.imread(house_mask_path, cv2.IMREAD_GRAYSCALE)
 
-    house = cv2.resize(_house, (0,0), fx=0.09, fy=0.09)
-    house_mask = cv2.resize(_house_mask, (0,0), fx=0.09, fy=0.09)
+    resize = max(_house.shape[0]/background.shape[0], _house.shape[1]/background.shape[1])
+    print(resize)
+    if resize > 0.15:
+        house = cv2.resize(_house, (0,0), fx=0.15/resize, fy=0.15/resize)
+        house_mask = cv2.resize(_house_mask, (0,0), fx=0.15/resize, fy=0.15/resize)
+    else:
+        house = _house
+        house_mask = _house_mask
 
     max_houses_width = np.uint32(background.shape[0]/house.shape[0])
     max_houses_height = np.uint32(background.shape[1]/house.shape[1])
