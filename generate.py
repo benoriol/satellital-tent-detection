@@ -13,31 +13,46 @@ def generate(parameters):
     house_path = 'data/casa1.jpg'
     house_mask_path = 'data/casa1-mask.png'
 
-    dimensions = parameters.get('-d') if '-d' in parameters else "10x15"
-    _dimensions = np.uint32(dimensions.split('x'))
-    battery_shape = _dimensions.copy() # shape of the houses disposition
-
-    n_houses = np.uint32(parameters.get('-h')) if '-h' in parameters else None
-
-    # number of house dispositions
-    n_outputs = np.uint32(parameters.get('-l')) if '-l' in parameters else 10
-
-    # rotation for batteries
-    angle = np.uint32(parameters.get('-r')) if '-r' in parameters else None
-
     background = cv2.imread(background_path)
     house = cv2.imread(house_path)
     house_mask = cv2.imread(house_mask_path, cv2.IMREAD_GRAYSCALE)
 
+    max_houses_width = np.uint32(background.shape[0]/house.shape[0])
+    max_houses_height = np.uint32(background.shape[1]/house.shape[1])
+
     dt = datetime.now()
     date = f'{dt:%Y%m%d%H%M}'
 
+    # number of house dispositions
+    n_outputs = np.uint32(parameters.get('-l')) if '-l' in parameters else 10
+
     for n in range(n_outputs):
+
+        #init
+        if '-d' in parameters:
+            if parameters.get('-d') == "0x0":
+                dimensions = max_width + "x" + max_height
+            else:
+                dimensions = parameters.get('-d')
+            _dimensions = np.uint32(dimensions.split('x'))
+            battery_shape = _dimensions.copy() # shape of the houses disposition
+        else:
+            battery_shape = [0, 0]
+
+        n_houses = np.uint32(parameters.get('-h')) if '-h' in parameters else None
+
+        # rotation for batteries
+        angle = np.uint32(parameters.get('-r')) if '-r' in parameters else None
+
 
         output = background.copy()
         output_mask = np.zeros((background.shape[0], background.shape[1]), np.uint8)
 
         # where will the batteries be?
+        if battery_shape == [0, 0]:
+            battery_shape[0] = random.choice(range(1, max_houses_width))
+            battery_shape[1] = random.choice(range(1, max_houses_height))
+            print(battery_shape)
         possible_positions = []
         for x in range(battery_shape[0]):
             for y in range(battery_shape[1]):
@@ -143,27 +158,28 @@ def generate(parameters):
             houses_big[:, :, i] = houses_big[:, :, i] * (output_mask/255)
 
         output = output + houses_big
+        # _, output_mask = cv2.threshold(output_mask,127,255,cv2.THRESH_BINARY)
 
         # cv2.imshow('hola', output)
         # cv2.waitKey()
         # cv2.destroyAllWindows()
 
-        # outpath_ = background_path.split('.')
-        # data = outpath_[0].split('/')
-        #
-        # if not os.path.exists(data[0] + '/' + date):
-        #     os.makedirs(data[0] + '/' + date)
-        #
-        # if not os.path.exists(data[0] + '/' + date + '/mask'):
-        #     os.makedirs(data[0] + '/' + date + '/mask')
-        # if not os.path.exists(data[0] + '/' + date + '/output'):
-        #     os.makedirs(data[0] + '/' + date + '/output')
-        #
-        # outpath = data[0] + '/' + date + '/output/' + data[1] + '-out' + str(n) + '.' + outpath_[-1]
-        # maskpath = data[0] + '/' + date + '/mask/' + data[1] + '-out' + str(n) + '-mask' + '.' + outpath_[-1]
-        #
-        # cv2.imwrite(outpath, output)
-        # cv2.imwrite(maskpath, output_mask)
+        outpath_ = background_path.split('.')
+        data = outpath_[0].split('/')
+
+        if not os.path.exists(data[0] + '/' + date):
+            os.makedirs(data[0] + '/' + date)
+
+        if not os.path.exists(data[0] + '/' + date + '/mask'):
+            os.makedirs(data[0] + '/' + date + '/mask')
+        if not os.path.exists(data[0] + '/' + date + '/output'):
+            os.makedirs(data[0] + '/' + date + '/output')
+
+        outpath = data[0] + '/' + date + '/output/' + data[1] + '-out' + str(n) + '.' + outpath_[-1]
+        maskpath = data[0] + '/' + date + '/mask/' + data[1] + '-out' + str(n) + '-mask' + '.' + outpath_[-1]
+
+        cv2.imwrite(outpath, output)
+        cv2.imwrite(maskpath, output_mask)
 
         _, thresh = cv2.threshold(255-output_mask, 127, 255, 0)
         img = cv2.bitwise_not(thresh)
@@ -181,7 +197,7 @@ def switch(command, arg):
         '-r': {'-r': arg},
         '-help': {'-l': "number of outputs (def.: 10)",
                   '-h': "number of houses (def.: random)",
-                  '-d': "battery shape dimensions (write NNxMM) (def.: 10x15)",
+                  '-d': "battery shape dimensions (write NNxMM) (if 0x0 adjusts to background; def.: random)",
                   '-r': "rotation of all the batteries (range -+90º) (def.: random)",
                   '-help': "help"
                   }
