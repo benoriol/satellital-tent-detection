@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import random
+import math
 from datetime import datetime
 import os
 import sys
@@ -10,7 +11,7 @@ def generate(parameters):
     # Path to the background image
     background_path = 'data/refugee-camp-before-data.jpg'
     # Path to foreground pattern
-    house_path = 'data/casa1.png'
+    house_path = 'data/casa1.jpg'
     house_mask_path = 'data/casa1-mask.png'
 
     outpath_ = background_path.split('.')
@@ -34,14 +35,18 @@ def generate(parameters):
     _house = cv2.imread(house_path)
     _house_mask = cv2.imread(house_mask_path, cv2.IMREAD_GRAYSCALE)
 
-    resize = max(_house.shape[0]/background.shape[0], _house.shape[1]/background.shape[1])
-    print(resize)
-    if resize > 0.15:
-        house = cv2.resize(_house, (0,0), fx=0.15/resize, fy=0.15/resize)
-        house_mask = cv2.resize(_house_mask, (0,0), fx=0.15/resize, fy=0.15/resize)
+    factor = math.sqrt(_house.shape[0]*_house.shape[1]/(background.shape[0]*background.shape[1]))
+    print("\nsize factor (house/background): " + str(factor))
+    if '-s' in parameters:
+        _relation = np.uint32(parameters.get('-s'))
+        relation = _relation if _relation <= min(1, factor) else 0.2
     else:
-        house = _house
-        house_mask = _house_mask
+        relation = 0.2 if factor > 0.2 else factor
+    resize = relation/factor
+    scale = 1/resize if 1/resize < 1 else resize
+    print("final scaling: " + str(scale))
+    house = cv2.resize(_house, (0,0), fx=scale, fy=scale)
+    house_mask = cv2.resize(_house_mask, (0,0), fx=scale, fy=scale)
 
     max_houses_width = np.uint32(background.shape[0]/house.shape[0])
     max_houses_height = np.uint32(background.shape[1]/house.shape[1])
@@ -213,6 +218,7 @@ def switch(command, arg):
                   '-h': "number of houses (def.: random)",
                   '-d': "battery shape dimensions (write NNxMM) (if 0x0 adjusts to background; def.: random)",
                   '-r': "rotation of all the batteries (range -+90º) (def.: random)",
+                  '-s': "scale house factor (<=1) (def.: 0.15)",
                   '-help': "help"
                   }
     }
