@@ -6,13 +6,34 @@ from datetime import datetime
 import os
 import sys
 
+def getHouses(pathForHouses, pathForBackground):
+    biggest_area = [0, 0]
+    for house in pathForHouses:
+        shape = cv2.imread(house_path[0]).shape
+        if shape[0]*shape[1] > biggest_area
+            biggest_area
+            # ESTIC FENT AIXO PER ENTREAR MES D'UNA IMATGE (ADAPTAR A LA MES GRAN LES PETITES)
+
 def generate(parameters):
+
+    house_path = [""]
+    if '-hf' in parameters:
+        if os.path.isfile(parameters.get('-hf')):
+            house_path = [parameters.get('-hf')]
+        elif os.path.isdir(parameters.get('-hf')):
+            files = [file for file in os.listdir('data/') if os.path.isfile(file)]
+            for file in files:
+                house_path.append(file)
+        else:
+            return
+    else:
+        # Path to foreground pattern
+        house_path = ['data/casa1.png']
+        house_mask_path = ['data/casa1-mask.png']
 
     # Path to the background image
     background_path = 'data/refugee-camp-before-data.jpg'
-    # Path to foreground pattern
-    house_path = 'data/casa1.jpg'
-    house_mask_path = 'data/casa1-mask.png'
+
 
     outpath_ = background_path.split('.')
     data = outpath_[0].split('/')
@@ -32,8 +53,8 @@ def generate(parameters):
     metadata = open(metadatapath, "w")
 
     background = cv2.imread(background_path)
-    _house = cv2.imread(house_path)
-    _house_mask = cv2.imread(house_mask_path, cv2.IMREAD_GRAYSCALE)
+    _house = cv2.imread(house_path[0])
+    _house_mask = cv2.imread(house_mask_path[0], cv2.IMREAD_GRAYSCALE)
 
     factor = math.sqrt(_house.shape[0]*_house.shape[1]/(background.shape[0]*background.shape[1]))
     print("\nsize factor (house/background): " + str(factor))
@@ -214,11 +235,15 @@ def switch(command, arg):
         '-h': {'-h': arg},
         '-d': {'-d': arg},
         '-r': {'-r': arg},
+        '-s': {'-s': arg},
+        '-in': {'-in': arg},
         '-help': {'-l': "number of outputs (def.: 10)",
                   '-h': "number of houses (def.: random)",
                   '-d': "battery shape dimensions (write NNxMM) (if 0x0 adjusts to background; def.: random)",
                   '-r': "rotation of all the batteries (range -+90º) (def.: random)",
                   '-s': "scale house factor (<=1) (def.: 0.15)",
+                  '-hf': "input house file(s) (pass 1 filename or 1 folder) (def. data/casa1.png)",
+                  '-bf': "input background file (pass 1 filename) (def. data/refugee-camp-before-data.jpg)",
                   '-help': "help"
                   }
     }
@@ -236,7 +261,10 @@ if __name__ == '__main__':
         printOptions()
     else:
         for command in commands:
-            arg = sys.argv[sys.argv.index(command)+1]
+            if sys.argv[sys.argv.index(command)+1] in commands:
+                arg = "no_arg"
+            else:
+                arg = sys.argv[sys.argv.index(command)+1]
             if command in switch(command, arg):
                 parameters.update(switch(command, arg))
         generate(parameters)
