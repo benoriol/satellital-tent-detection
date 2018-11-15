@@ -5,14 +5,30 @@ import math
 from datetime import datetime
 import os
 import sys
+from tqdm import tqdm
 
-def getHouses(pathForHouses, pathForBackground):
-    biggest_area = [0, 0]
-    for house in pathForHouses:
-        shape = cv2.imread(house_path[0]).shape
-        if shape[0]*shape[1] > biggest_area
-            biggest_area
-            # ESTIC FENT AIXO PER ENTREAR MES D'UNA IMATGE (ADAPTAR A LA MES GRAN LES PETITES)
+def getHouses(pathForHouses, pathForBackground, parameters):
+    biggest_area = [0, 0, 0]
+    for i in range(1, pathForHouses.count):
+        shape = cv2.imread(pathForHouses[i]).shape
+        if shape[0]*shape[1] > biggest_area[0]*biggest_area[1]:
+            biggest_area = [shape[0], shape[1], i]
+    houses = np.zeros((biggest_area[0], biggest_area[1], 3, pathForHouses.count), np.uint8)
+
+    for i in range(1, pathForHouses.count):
+        factor = math.sqrt(_house.shape[0]*_house.shape[1]/(background.shape[0]*background.shape[1]))
+        print("\nsize factor (house/background): " + str(factor))
+        if '-s' in parameters:
+            _relation = np.uint32(parameters.get('-s'))
+            relation = _relation if _relation <= min(1, factor) else 0.2
+        else:
+            relation = 0.2 if factor > 0.2 else factor
+        resize = relation/factor
+        scale = 1/resize if 1/resize < 1 else resize
+        print("final scaling: " + str(scale))
+        house = cv2.resize(_house, (0,0), fx=scale, fy=scale)
+        house_mask = cv2.resize(_house_mask, (0,0), fx=scale, fy=scale)
+
 
 def generate(parameters):
 
@@ -55,9 +71,11 @@ def generate(parameters):
     background = cv2.imread(background_path)
     _house = cv2.imread(house_path[0])
     _house_mask = cv2.imread(house_mask_path[0], cv2.IMREAD_GRAYSCALE)
+    if '-m' in parameters:
+        _house_white_mask = np.ones(_house_mask.shape, np.uint8)*255
 
     factor = math.sqrt(_house.shape[0]*_house.shape[1]/(background.shape[0]*background.shape[1]))
-    print("\nsize factor (house/background): " + str(factor))
+    # print("\nsize factor (house/background): " + str(factor))
     if '-s' in parameters:
         _relation = np.uint32(parameters.get('-s'))
         relation = _relation if _relation <= min(1, factor) else 0.2
@@ -65,9 +83,11 @@ def generate(parameters):
         relation = 0.2 if factor > 0.2 else factor
     resize = relation/factor
     scale = 1/resize if 1/resize < 1 else resize
-    print("final scaling: " + str(scale))
+    # print("final scaling: " + str(scale))
     house = cv2.resize(_house, (0,0), fx=scale, fy=scale)
     house_mask = cv2.resize(_house_mask, (0,0), fx=scale, fy=scale)
+    if '-m' in parameters:
+        house_white_mask = cv2.resize(_house_white_mask, (0,0), fx=scale, fy=scale)
 
     max_houses_width = np.uint32(background.shape[0]/house.shape[0])
     max_houses_height = np.uint32(background.shape[1]/house.shape[1])
@@ -75,10 +95,12 @@ def generate(parameters):
     # number of house dispositions
     n_outputs = np.uint32(parameters.get('-l')) if '-l' in parameters else 10
 
-    for n in range(n_outputs):
+    for n in tqdm(range(n_outputs)):
 
         output = background.copy()
         output_mask = np.zeros((background.shape[0], background.shape[1]), np.uint8)
+        if '-m' in parameters:
+            output_white_mask = np.zeros((background.shape[0], background.shape[1]), np.uint8)
 
         # where will the batteries be?
         battery_shape = [1, 1]
@@ -113,6 +135,8 @@ def generate(parameters):
         # let's assign
         houses = np.zeros((battery_shape[0]*house.shape[0], battery_shape[1]*house.shape[1], 3), np.uint8)
         mask = np.zeros((battery_shape[0]*house.shape[0], battery_shape[1]*house.shape[1]), np.uint8)
+        if '-m' in parameters:
+            white_mask = mask.copy()
 
         for p in positions:
             x = house.shape[0]*p[0]
@@ -120,15 +144,21 @@ def generate(parameters):
 
             houses[x: x+house.shape[0], y: y+house.shape[1], :] = house
             mask[x: x+house.shape[0], y: y+house.shape[1]] = house_mask
+            if '-m' in parameters:
+                white_mask[x: x+house.shape[0], y: y+house.shape[1]] = house_white_mask
 
         #now we rotate
         diagonal = np.uint32(np.sqrt(houses.shape[0]*houses.shape[0] + houses.shape[1]*houses.shape[1]))+1
         aux_houses = np.zeros((diagonal*2, diagonal*2, 3), np.uint8)
         aux_mask = np.zeros((diagonal*2, diagonal*2), np.uint8)
+
         # define initials to put houses in the middle of the auxiliar structures
         initials = [np.uint32(aux_houses.shape[0]/2-houses.shape[0]/2), np.uint32(aux_houses.shape[1]/2-houses.shape[1]/2)]
         aux_houses[initials[0]:(initials[0]+houses.shape[0]), initials[1]:(initials[1]+houses.shape[1])] = houses
         aux_mask[initials[0]:(initials[0]+houses.shape[0]), initials[1]:(initials[1]+houses.shape[1])] = mask
+        if '-m' in parameters:
+            aux_white_mask = np.zeros((diagonal*2, diagonal*2), np.uint8)
+            aux_white_mask[initials[0]:(initials[0]+houses.shape[0]), initials[1]:(initials[1]+houses.shape[1])] = white_mask
 
         # rotation for batteries
         angle = np.uint32(parameters.get('-r')) if '-r' in parameters else None
@@ -141,6 +171,8 @@ def generate(parameters):
         # Affine transformation
         rotated = cv2.warpAffine(aux_houses, M, (diagonal*2, diagonal*2))
         mask_rotated = cv2.warpAffine(aux_mask, M, (diagonal*2, diagonal*2))
+        if '-m' in parameters:
+            aux_white_mask_rotated = cv2.warpAffine(aux_white_mask, M, (diagonal*2, diagonal*2))
 
         # Getting the part of the image with houses
         x0 = 0
@@ -171,6 +203,8 @@ def generate(parameters):
 
         cut_rotated = rotated[x0:x1, y0:y1]
         cut_mask = mask_rotated[x0:x1, y0:y1]
+        if '-m' in parameters:
+            cut_white_mask = aux_white_mask_rotated[x0:x1, y0:y1]
 
         # put rotated battery in background
         if background.shape[0] - cut_rotated.shape[0] <= 0:
@@ -190,6 +224,8 @@ def generate(parameters):
             small_range_y = [0, cut_rotated.shape[1]]
 
         output_mask[big_range_x[0]:big_range_x[1], big_range_y[0]:big_range_y[1]] = cut_mask[small_range_x[0]:small_range_x[1], small_range_y[0]:small_range_y[1]]
+        if '-m' in parameters:
+            output_white_mask[big_range_x[0]:big_range_x[1], big_range_y[0]:big_range_y[1]] = cut_white_mask[small_range_x[0]:small_range_x[1], small_range_y[0]:small_range_y[1]]
         houses_big = np.zeros((background.shape[0], background.shape[1], background.shape[2]), np.uint8)
         houses_big[big_range_x[0]:big_range_x[1], big_range_y[0]:big_range_y[1], :] = cut_rotated[small_range_x[0]:small_range_x[1], small_range_y[0]:small_range_y[1]]
 
@@ -211,16 +247,16 @@ def generate(parameters):
         maskpath = data[0] + '/' + date + '/mask/' + data[1] + '-out' + str(n) + '-mask' + '.' + outpath_[-1]
 
         cv2.imwrite(outpath, output)
-        cv2.imwrite(maskpath, output_mask)
+        cv2.imwrite(maskpath, output_white_mask if '-m' in parameters else output_mask)
 
         _, thresh = cv2.threshold(255-output_mask, 127, 255, 0)
         img = cv2.bitwise_not(thresh)
         _, markers = cv2.connectedComponents(img)
 
-        print("\nimage " + str(n))
-        print("battery shape: " + str(battery_shape))
-        print("# groups of houses: " + str(n_houses))
-        print("# of houses: " + str(np.amax(markers)))
+        # print("\nimage " + str(n))
+        # print("battery shape: " + str(battery_shape))
+        # print("# groups of houses: " + str(n_houses))
+        # print("# of houses: " + str(np.amax(markers)))
 
         metadata.write(outpath.split('/' + date + '/')[-1] + ' ' + maskpath.split('/' + date + '/')[-1] + ' ' + str(np.amax(markers)) + '\n')
 
@@ -236,12 +272,15 @@ def switch(command, arg):
         '-d': {'-d': arg},
         '-r': {'-r': arg},
         '-s': {'-s': arg},
-        '-in': {'-in': arg},
+        '-m': {'-m': arg},
+        '-hf': {'-hf': arg},
+        '-bf': {'-bf': arg},
         '-help': {'-l': "number of outputs (def.: 10)",
                   '-h': "number of houses (def.: random)",
                   '-d': "battery shape dimensions (write NNxMM) (if 0x0 adjusts to background; def.: random)",
                   '-r': "rotation of all the batteries (range -+90º) (def.: random)",
                   '-s': "scale house factor (<=1) (def.: 0.15)",
+                  '-m': "output mask for input house(s) or mask for each house (def.: for each house)",
                   '-hf': "input house file(s) (pass 1 filename or 1 folder) (def. data/casa1.png)",
                   '-bf': "input background file (pass 1 filename) (def. data/refugee-camp-before-data.jpg)",
                   '-help': "help"
@@ -261,10 +300,13 @@ if __name__ == '__main__':
         printOptions()
     else:
         for command in commands:
-            if sys.argv[sys.argv.index(command)+1] in commands:
+            if len(sys.argv) - sys.argv.index(command)-1 <= 0:
                 arg = "no_arg"
             else:
-                arg = sys.argv[sys.argv.index(command)+1]
+                if sys.argv[sys.argv.index(command)+1] in commands:
+                    arg = "no_arg"
+                else:
+                    arg = sys.argv[sys.argv.index(command)+1]
             if command in switch(command, arg):
                 parameters.update(switch(command, arg))
         generate(parameters)
