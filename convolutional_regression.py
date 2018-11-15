@@ -9,10 +9,11 @@ import cv2
 
 import time
 
-TRAIN_FOLDER = 'data/201811151325'
-VALID_FOLDER = 'data/201811151328'
+TRAIN_FOLDER = 'data/201811151325' # 1000
+# TRAIN_FOLDER = 'data/201811151625' # 50
+VALID_FOLDER = 'data/201811151328' # 200
 
-BATCH_SIZE = 10
+BATCH_SIZE = 20
 N_EPOCHS = 10
 
 
@@ -27,7 +28,8 @@ class DataLoader:
         if shuffle:
             random.shuffle(self.metadata)
 
-
+    def get_len(self):
+        return len(self.metadata)
 
     def get_batch(self, size):
 
@@ -66,22 +68,29 @@ def error(prediction, target):
 
 def validate(model, metadata_path, device):
 
-    dataloader = DataLoader(metadata_path, device)
 
+
+    dataloader = DataLoader(metadata_path, device)
     src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
     tgt_batch /= 1000
 
-    err = 0
+    err = torch.tensor(0).float().to(device)
     n = 0
 
     while type(src_batch) != type(-1):
-        prediction = model(src_batch)
+        with torch.no_grad():
+            prediction = model(src_batch)
 
         err += error(prediction, tgt_batch)
         n += 1
-
         src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
         tgt_batch /= 1000
+
+        optimizer.zero_grad()
+
+    del src_batch
+    del tgt_batch
+    del dataloader
 
     return err/n
 
@@ -186,19 +195,26 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    for i in tqdm(range(N_EPOCHS)):
+    for i in (range(N_EPOCHS)):
 
         dataloader = DataLoader(train_metadata_path, device, shuffle=True)
 
+        pbar = tqdm(total=dataloader.get_len())
+
         src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
         tgt_batch = tgt_batch/1000
+        with torch.no_grad():
+            err = torch.tensor(0).float().to(device)
+        n = 0
+
 
         while type(src_batch) != type(-1):
 
             prediction = model(src_batch)
 
             loss = loss_mse(prediction, tgt_batch)
-            err = error(prediction, tgt_batch)
+            err += error(prediction, tgt_batch)
+            n += 1
 
             optimizer.zero_grad()
 
@@ -209,25 +225,26 @@ if __name__ == '__main__':
             src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
             tgt_batch /= 1000
 
+            pbar.update(BATCH_SIZE)
+
+
         del src_batch
         del tgt_batch
         del dataloader
 
-        print('epoch n: ' + str(i + 1) + '  loss:' + str(loss.item()))
-        print('epoch n: ' + str(i + 1) + '  error:' + str(err.item()))
 
-        # valid_error = validate(model, valid_metadata_path, device)
-        valid_error = 0
-        print('validation error: ' + str(err.item()))
+
+        valid_error = validate(model, valid_metadata_path, device)
+        print(('epoch n: ' + str(i + 1)))
+        print('train MSE:' + str((err/n).item()).format())
+        print('valid MSE:' + str((valid_error).item()))
 
         elapsed = time.time() - start_time
         # print('time spent: ' + str(elapsed) + '  time remaining: ' + str(elapsed/(i+1)*N_EPOCHS-elapsed))
 
 
-
-
-    #cp_name = 'models/autoencoder-epoch' + str(e + 1) + '.pt'
-    #print('Saving checkpoint to: ' + cp_name)
-    #torch.save(autoenc, cp_name)
+    cp_name = 'models/convregression1-pt'
+    print('Saving checkpoint to: ' + cp_name)
+    torch.save(model, cp_name)
 
 
