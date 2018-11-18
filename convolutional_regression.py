@@ -9,9 +9,11 @@ import cv2
 
 import time
 
-TRAIN_FOLDER = 'data/201811151325' # 1000
+# TRAIN_FOLDER = 'data/201811151325' # 1000
 # TRAIN_FOLDER = 'data/201811151625' # 50
-VALID_FOLDER = 'data/201811151328' # 200
+TRAIN_FOLDER = 'data/201811151751' # 5000
+# VALID_FOLDER = 'data/201811151328' # 200
+VALID_FOLDER = 'data/201811151325' # 1000
 
 BATCH_SIZE = 20
 N_EPOCHS = 10
@@ -110,14 +112,17 @@ class Convnet(nn.Module):
             nn.BatchNorm2d(16),
             nn.ReLU())
         self.layer3 = nn.Sequential(
-            nn.Conv2d(16, 16, kernel_size=5, stride=1, padding=2),
-            nn.BatchNorm2d(16),
+            nn.Conv2d(16, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
+            nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+        # out size is 230 * 350
+
 
         # Level2
         self.layer4 = nn.Sequential(
-            nn.Conv2d(16, 32, kernel_size=5, stride=1, padding=2),
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
             nn.BatchNorm2d(32),
             nn.ReLU())
         self.layer5 = nn.Sequential(
@@ -128,24 +133,50 @@ class Convnet(nn.Module):
             nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
             nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
+            nn.MaxPool2d(kernel_size=2, stride=2)
+        )
 
+        # out size is 32 * 116 * 175
         # Level3
         self.layer7 = nn.Sequential(
-            nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
             nn.ReLU())
         self.layer8 = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=5, stride=1, padding=2),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
             nn.ReLU())
         self.layer9 = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=5, stride=1, padding=2),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            # nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+
+        # out size is 64 * 58 * 87
+
+
+        # Level4
+        self.layer10 = nn.Sequential(
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
             nn.ReLU())
+        self.layer11 = nn.Sequential(
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU())
+        self.layer12 = nn.Sequential(
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            #nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+
+        # out size is 128 * 29 * 43
+
 
         self.denselayers = nn.Sequential(
-            nn.Linear(64 * 116 * 175, 200),
+            nn.Linear(32 * 116 * 175, 200),
             nn.ReLU(),
             nn.Linear(200, 200),
             nn.ReLU(),
@@ -166,12 +197,18 @@ class Convnet(nn.Module):
         out = self.layer1(inp)
         out = self.layer2(out)
         out = self.layer3(out)
+
         out = self.layer4(out)
         out = self.layer5(out)
         out = self.layer6(out)
+
         out = self.layer7(out)
         out = self.layer8(out)
         out = self.layer9(out)
+
+        # out = self.layer10(out)
+        # out = self.layer11(out)
+        # out = self.layer12(out)
 
         out = out.reshape(out.size(0), -1)
         out = self.denselayers(out)
@@ -242,7 +279,7 @@ if __name__ == '__main__':
         elapsed = time.time() - start_time
         # print('time spent: ' + str(elapsed) + '  time remaining: ' + str(elapsed/(i+1)*N_EPOCHS-elapsed))
 
-
+    print('trained with 5000, eval with 1000')
     cp_name = 'models/convregression1-pt'
     print('Saving checkpoint to: ' + cp_name)
     torch.save(model, cp_name)
