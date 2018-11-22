@@ -82,20 +82,29 @@ def generate(parameters):
     if '-m' in parameters:
         _house_white_mask = np.ones(_house_mask.shape, np.uint8)*255
 
-    factor = math.sqrt(_house.shape[0]*_house.shape[1]/(background.shape[0]*background.shape[1]))
-    # print("\nsize factor (house/background): " + str(factor))
-    if '-s' in parameters:
-        _relation = float(parameters.get('-s'))/100
-        relation = _relation if _relation <= 1 else 0.2
+    # factor = math.sqrt(_house.shape[0]*_house.shape[1]/(background.shape[0]*background.shape[1]))
+    # # print("\nsize factor (house/background): " + str(factor))
+    # if '-s' in parameters:
+    #     _relation = float(parameters.get('-s'))/100
+    #     relation = _relation if _relation <= 1 else 0.2
+    # else:
+    #     relation = 0.2 if factor > 0.2 else factor
+    # resize = relation/factor
+    # scale = 1/resize if 1/resize < 1 else resize
+    # # print("final scaling: " + str(scale))
+    # house = cv2.resize(_house, (0,0), fx=scale, fy=scale)
+    # house_mask = cv2.resize(_house_mask, (0,0), fx=scale, fy=scale)
+    # if '-m' in parameters:
+    #     house_white_mask = cv2.resize(_house_white_mask, (0,0), fx=scale, fy=scale)
+    if '-s' in parameters and float(parameters.get('-s'))*max(_house.shape[0], _house.shape[1]) < max(background.shape[0], background.shape[1]):
+        relation = float(parameters.get('-s'))
     else:
-        relation = 0.2 if factor > 0.2 else factor
-    resize = relation/factor
-    scale = 1/resize if 1/resize < 1 else resize
-    # print("final scaling: " + str(scale))
-    house = cv2.resize(_house, (0,0), fx=scale, fy=scale)
-    house_mask = cv2.resize(_house_mask, (0,0), fx=scale, fy=scale)
+        relation = 0.5
+    house = cv2.resize(_house, (0,0), fx=relation, fy=relation)
+    house_mask = cv2.resize(_house_mask, (0,0), fx=relation, fy=relation)
     if '-m' in parameters:
-        house_white_mask = cv2.resize(_house_white_mask, (0,0), fx=scale, fy=scale)
+        house_white_mask = cv2.resize(_house_white_mask, (0,0), fx=relation, fy=relation)
+
 
     max_houses_width = np.uint32(background.shape[0]/house.shape[0])
     max_houses_height = np.uint32(background.shape[1]/house.shape[1])
@@ -170,8 +179,8 @@ def generate(parameters):
 
         # rotation for batteries
         angle = np.uint32(parameters.get('-r')) if '-r' in parameters else None
-        if angle == None or angle < -90 or angle > 90:
-            angle = random.choice(range(-90, 90))
+        if angle == None or angle < 0 or angle > 180:
+            angle = random.choice(range(0, 180))
 
         # Definir Rotacio
         M = cv2.getRotationMatrix2D((aux_houses.shape[0]/2, aux_houses.shape[1]/2), angle, 1)
@@ -286,8 +295,8 @@ def switch(command, arg):
         '-help': {'-l': "number of outputs (def.: 10)",
                   '-h': "number of houses (def.: random)",
                   '-d': "battery shape dimensions (write NNxMM) (if 0x0 adjusts to background; def.: random)",
-                  '-r': "rotation of all the batteries (range -+90º) (def.: random)",
-                  '-s': "scale house factor % (<=100) (def.: 15)",
+                  '-r': "rotation of all the batteries (range 0-180º) (def.: random)",
+                  '-s': "scale house factor (def.: -)",
                   '-m': "output mask for input house(s) or mask for each house (def.: for each house)",
                   '-hf': "input house file (pass 1 filename) (def. data/casa1.png)",
                   '-bf': "input background file (pass 1 filename) (def. data/refugee-camp-before-data.jpg)",
