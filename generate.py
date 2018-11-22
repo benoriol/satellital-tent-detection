@@ -57,7 +57,7 @@ def generate(parameters):
     house_mask_path = house_path.replace('.', '-mask.') if os.path.isfile(house_path.replace('.', '-mask.')) else house_path
 
     # Path to the background image
-    background_path = parameters.get('-bf') if '-bf' in parameters else 'data/refugee-camp-before-data.jpg'
+    background_path = parameters.get('-bf') if '-bf' in parameters else 'data/refugee_camp_before_data.jpg'
 
     outpath_ = background_path.split('.')
     data = outpath_[0].split('/')
@@ -65,16 +65,16 @@ def generate(parameters):
     dt = datetime.now()
     date = f'{dt:%Y%m%d%H%M}'
 
-    if not os.path.exists(data[0] + '/' + date):
-        os.makedirs(data[0] + '/' + date)
-
-    if not os.path.exists(data[0] + '/' + date + '/mask'):
-        os.makedirs(data[0] + '/' + date + '/mask')
-    if not os.path.exists(data[0] + '/' + date + '/output'):
-        os.makedirs(data[0] + '/' + date + '/output')
-
-    metadatapath = data[0] + '/' + date + '/' "metadata.txt"
-    metadata = open(metadatapath, "w")
+    # if not os.path.exists(data[0] + '/' + date):
+    #     os.makedirs(data[0] + '/' + date)
+    #
+    # if not os.path.exists(data[0] + '/' + date + '/mask'):
+    #     os.makedirs(data[0] + '/' + date + '/mask')
+    # if not os.path.exists(data[0] + '/' + date + '/output'):
+    #     os.makedirs(data[0] + '/' + date + '/output')
+    #
+    # metadatapath = data[0] + '/' + date + '/' "metadata.txt"
+    # metadata = open(metadatapath, "w")
 
     background = cv2.imread(background_path)
     _house = cv2.imread(house_path)
@@ -158,7 +158,10 @@ def generate(parameters):
         for p in positions:
             x = house.shape[0]*p[0]
             y = house.shape[1]*p[1]
-
+            if random.choice(range(0, 100)) > 50:
+                m = cv2.getRotationMatrix2D((np.uint32(house.shape[1]/2), np.uint32(house.shape[0]/2)), 180, 1)
+                house = cv2.warpAffine(house, m, (house.shape[1], house.shape[0]))
+                house_mask = cv2.warpAffine(house_mask, m, (house_mask.shape[1], house_mask.shape[0]))
             houses[x: x+house.shape[0], y: y+house.shape[1], :] = house
             mask[x: x+house.shape[0], y: y+house.shape[1]] = house_mask
             if '-m' in parameters:
@@ -256,15 +259,15 @@ def generate(parameters):
         output = output + houses_big
         # _, output_mask = cv2.threshold(output_mask,127,255,cv2.THRESH_BINARY)
 
-        # cv2.imshow('output', output)
-        # cv2.waitKey()
-        # cv2.destroyAllWindows()
+        cv2.imshow('output', output)
+        cv2.waitKey()
+        cv2.destroyAllWindows()
 
-        outpath = data[0] + '/' + date + '/output/' + data[1] + '-out' + str(n) + '.' + outpath_[-1]
-        maskpath = data[0] + '/' + date + '/mask/' + data[1] + '-out' + str(n) + '-mask' + '.' + outpath_[-1]
-
-        cv2.imwrite(outpath, output)
-        cv2.imwrite(maskpath, output_white_mask if '-m' in parameters else output_mask)
+        # outpath = data[0] + '/' + date + '/output/' + data[1] + '-out' + str(n) + '.' + outpath_[-1]
+        # maskpath = data[0] + '/' + date + '/mask/' + data[1] + '-out' + str(n) + '-mask' + '.' + outpath_[-1]
+        #
+        # cv2.imwrite(outpath, output)
+        # cv2.imwrite(maskpath, output_white_mask if '-m' in parameters else output_mask)
 
         _, thresh = cv2.threshold(255-output_mask, 127, 255, 0)
         img = cv2.bitwise_not(thresh)
@@ -275,11 +278,11 @@ def generate(parameters):
         # print("# groups of houses: " + str(n_houses))
         # print("# of houses: " + str(np.amax(markers)))
 
-        metadata.write(outpath.split('/' + date + '/')[-1] + ' ' + maskpath.split('/' + date + '/')[-1] + ' ' + str(np.amax(markers)) + '\n')
+        # metadata.write(outpath.split('/' + date + '/')[-1] + ' ' + maskpath.split('/' + date + '/')[-1] + ' ' + str(np.amax(markers)) + '\n')
 
 
     pass
-    metadata.close()
+    # metadata.close()
 
 def switch(command, arg):
 
@@ -299,7 +302,7 @@ def switch(command, arg):
                   '-s': "scale house factor (def.: -)",
                   '-m': "output mask for input house(s) or mask for each house (def.: for each house)",
                   '-hf': "input house file (pass 1 filename) (def. data/casa1.png)",
-                  '-bf': "input background file (pass 1 filename) (def. data/refugee-camp-before-data.jpg)",
+                  '-bf': "input background file (pass 1 filename) (def. data/refugee_camp_before_data.jpg)",
                   '-help': "help"
                   }
     }
