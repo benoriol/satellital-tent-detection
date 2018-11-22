@@ -8,48 +8,56 @@ import sys
 from tqdm import tqdm
 
 def getHouses(pathForHouses, pathForBackground, parameters):
-    biggest_area = [0, 0, 0]
-    for i in range(1, pathForHouses.count):
-        shape = cv2.imread(pathForHouses[i]).shape
-        if shape[0]*shape[1] > biggest_area[0]*biggest_area[1]:
-            biggest_area = [shape[0], shape[1], i]
-    houses = np.zeros((biggest_area[0], biggest_area[1], 3, pathForHouses.count), np.uint8)
 
-    for i in range(1, pathForHouses.count):
+    scales = [0]
+    for i in range(0, pathForHouses.count):
+        _house = cv2.imread(pathForHouses[i])
         factor = math.sqrt(_house.shape[0]*_house.shape[1]/(background.shape[0]*background.shape[1]))
-        print("\nsize factor (house/background): " + str(factor))
+        # print("\nsize factor (house/background): " + str(factor))
         if '-s' in parameters:
-            _relation = np.uint32(parameters.get('-s'))
+            _relation = float(parameters.get('-s'))/100
             relation = _relation if _relation <= min(1, factor) else 0.2
         else:
             relation = 0.2 if factor > 0.2 else factor
         resize = relation/factor
-        scale = 1/resize if 1/resize < 1 else resize
-        print("final scaling: " + str(scale))
+        scales[i] = 1/resize if 1/resize < 1 else resize
+        # print("final scaling: " + str(scale))
         house = cv2.resize(_house, (0,0), fx=scale, fy=scale)
         house_mask = cv2.resize(_house_mask, (0,0), fx=scale, fy=scale)
 
 
+    biggest_area = [0, 0, 0]
+    for i in range(1, pathForHouses.count):
+        shape = cv2.imread(pathForHouses[i]).shape
+        if house.shape[0]*house.shape[1] > biggest_area[0]*biggest_area[1]:
+            biggest_area = [house.shape[0], house.shape[1], i]
+    houses = np.zeros((biggest_area[0], biggest_area[1], 3, pathForHouses.count), np.uint8)
+
+
+
+
 def generate(parameters):
 
-    house_path = [""]
-    if '-hf' in parameters:
-        if os.path.isfile(parameters.get('-hf')):
-            house_path = [parameters.get('-hf')]
-        elif os.path.isdir(parameters.get('-hf')):
-            files = [file for file in os.listdir('data/') if os.path.isfile(file)]
-            for file in files:
-                house_path.append(file)
-        else:
-            return
-    else:
-        # Path to foreground pattern
-        house_path = ['data/casa1.png']
-        house_mask_path = ['data/casa1-mask.png']
+    # house_path = [""]
+    # if '-hf' in parameters:
+    #     if os.path.isfile(parameters.get('-hf')):
+    #         house_path = [parameters.get('-hf')]
+    #     elif os.path.isdir(parameters.get('-hf')):
+    #         files = [file for file in os.listdir('data/') if os.path.isfile(file)]
+    #         for file in files:
+    #             house_path.append(file)
+    #     else:
+    #         return
+    # else:
+    #     # Path to foreground pattern
+    #     house_path = ['data/casa1.png']
+    #     house_mask_path = ['data/casa1-mask.png']
+
+    house_path = parameters.get('-hf') if '-hf' in parameters else 'data/casa1.png'
+    house_mask_path = house_path.replace('.', '-mask.') if os.path.isfile(house_path.replace('.', '-mask.')) else house_path
 
     # Path to the background image
-    background_path = 'data/refugee-camp-before-data.jpg'
-
+    background_path = parameters.get('-bf') if '-bf' in parameters else 'data/refugee-camp-before-data.jpg'
 
     outpath_ = background_path.split('.')
     data = outpath_[0].split('/')
@@ -69,16 +77,16 @@ def generate(parameters):
     metadata = open(metadatapath, "w")
 
     background = cv2.imread(background_path)
-    _house = cv2.imread(house_path[0])
-    _house_mask = cv2.imread(house_mask_path[0], cv2.IMREAD_GRAYSCALE)
+    _house = cv2.imread(house_path)
+    _house_mask = cv2.imread(house_mask_path, cv2.IMREAD_GRAYSCALE)
     if '-m' in parameters:
         _house_white_mask = np.ones(_house_mask.shape, np.uint8)*255
 
     factor = math.sqrt(_house.shape[0]*_house.shape[1]/(background.shape[0]*background.shape[1]))
     # print("\nsize factor (house/background): " + str(factor))
     if '-s' in parameters:
-        _relation = np.uint32(parameters.get('-s'))
-        relation = _relation if _relation <= min(1, factor) else 0.2
+        _relation = float(parameters.get('-s'))/100
+        relation = _relation if _relation <= 1 else 0.2
     else:
         relation = 0.2 if factor > 0.2 else factor
     resize = relation/factor
@@ -279,9 +287,9 @@ def switch(command, arg):
                   '-h': "number of houses (def.: random)",
                   '-d': "battery shape dimensions (write NNxMM) (if 0x0 adjusts to background; def.: random)",
                   '-r': "rotation of all the batteries (range -+90º) (def.: random)",
-                  '-s': "scale house factor (<=1) (def.: 0.15)",
+                  '-s': "scale house factor % (<=100) (def.: 15)",
                   '-m': "output mask for input house(s) or mask for each house (def.: for each house)",
-                  '-hf': "input house file(s) (pass 1 filename or 1 folder) (def. data/casa1.png)",
+                  '-hf': "input house file (pass 1 filename) (def. data/casa1.png)",
                   '-bf': "input background file (pass 1 filename) (def. data/refugee-camp-before-data.jpg)",
                   '-help': "help"
                   }
