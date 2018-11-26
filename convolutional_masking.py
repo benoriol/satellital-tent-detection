@@ -1,8 +1,3 @@
-'''
-    Implementing a convolutional autoencoder. https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/
-'''
-
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -109,94 +104,7 @@ class Autoencoder(nn.Module):
             # nn.MaxPool2d(kernel_size=2, stride=2)
         )
 
-
-        self.max22 = nn.MaxPool2d(2, 2)
-        self.relu = nn.ReLU()
-        self.upsample1 = nn.Upsample(size=(236, 353), mode='bilinear')
-        self.upsample2 = nn.Upsample(size=(473, 706), mode='bilinear')
-
-        self.conv1_1 = nn.Conv2d(3, 4, 3)
-        self.conv1_2 = nn.Conv2d(4, 4, 3)
-        self.conv1_3 = nn.Conv2d(4, 4, 3)
-
-        self.conv1_4 = nn.Conv2d(4, 8, 3)
-        self.conv1_5 = nn.Conv2d(8, 8, 3)
-        self.conv1_6 = nn.Conv2d(8, 8, 3)
-
-        self.conv1_7 = nn.Conv2d(8, 16, 3)
-        self.conv1_8 = nn.Conv2d(16, 16, 3)
-
-        self.conv2_1 = nn.Conv2d(16, 8, 3)
-        self.conv2_2 = nn.Conv2d(8, 8, 3)
-        self.conv2_3 = nn.Conv2d(8, 8, 3)
-
-        self.conv2_4 = nn.Conv2d(12, 4, 3)
-        # self.conv2_4 = nn.Conv2d(4, 4, 3)
-        self.conv2_5 = nn.Conv2d(4, 4, 3)
-        self.conv2_6 = nn.Conv2d(4, 1, 3)
-
-        self.loss_mse = nn.MSELoss()
-
-        self.sm2d = nn.Softmax2d()
-
-
-
     def forward(self, inp):
-
-        # print('input energy', self.loss_mse(inp, torch.zeros(inp.size())))
-        # Encoder
-        # out = self.conv1_1(inp)
-        # out = self.relu(out)
-        # out = self.conv1_2(out)
-        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
-
-        # out = self.relu(out)
-        # out = self.conv1_3(out)
-        # out1 = self.relu(out)
-        # out = self.max22(out1)
-        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
-        # out = self.conv1_4(out)
-        # out = self.relu(out)
-        # out = self.conv1_5(out)
-        # out = self.relu(out)
-        # out = self.conv1_6(out)
-        # out = self.relu(out)
-
-        # out = self.max22(out)
-
-        # out = self.conv1_7(out)
-        # out = self.relu(out)
-        # out = self.conv1_8(out)
-        # out = self.relu(out)
-
-        # out = self.upsample1(out)
-
-        # out = self.conv2_1(out)
-        # out = self.relu(out)
-        # out = self.conv2_2(out)
-        # out = self.relu(out)
-        # out = self.conv2_3(out)
-        # out = self.relu(out)
-
-        # out = self.upsample2(out)
-        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
-        # out1 = self.upsample2(out1)
-        #print(out.size())
-        #print(out1.size())
-        # out = torch.cat((out, out1), 1)
-        #print(out.size())
-        #quit()
-        # out = self.conv2_4(out)
-        # out = self.relu(out)
-        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
-        # out = self.conv2_5(out)
-        # out = self.relu(out)
-        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
-        # out = self.conv2_6(out)
-        # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
-        # out = self.relu(out)
-        # print('out size', out.size())
-        # out = self.sm2d(out)
         
         out = self.layer1(inp)
         out = self.layer2(out)
@@ -225,7 +133,7 @@ def validate(model, metadata_path, device):
 
     dataloader = DataLoader(metadata_path, device)
     src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
-    tgt_batch /= 1000
+    # tgt_batch /= 1000
 
     err = torch.tensor(0).float().to(device)
     n = 0
@@ -237,7 +145,7 @@ def validate(model, metadata_path, device):
         err += error(prediction, tgt_batch)
         n += 1
         src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
-        tgt_batch /= 1000
+        # tgt_batch /= 1000
 
         optimizer.zero_grad()
 
@@ -270,7 +178,7 @@ if __name__ == '__main__':
         pbar = tqdm(total=dataloader.get_len())
 
         src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
-        tgt_batch = tgt_batch
+
         with torch.no_grad():
             err = torch.tensor(0).float().to(device)
         n = 0
@@ -296,9 +204,11 @@ if __name__ == '__main__':
         del tgt_batch
         del dataloader
 
+        err = err / n
+
         valid_error = validate(model, valid_metadata_path, device)
         print(('epoch n: ' + str(i + 1)))
-        print('train MSE:' + str((err / n).item()).format())
+        print('train MSE:' + str((err).item()).format())
         print('valid MSE:' + str((valid_error).item()))
         print('loss: ' + str(loss.item()))
 
