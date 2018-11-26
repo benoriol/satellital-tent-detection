@@ -62,19 +62,20 @@ def generate(parameters):
     outpath_ = background_path.split('.')
     data = outpath_[0].split('/')
 
-    dt = datetime.now()
-    date = f'{dt:%Y%m%d%H%M}'
+    date = parameters.get('-date')
+    # date = f'{dt:%Y%m%d%H%M}'
 
-    # if not os.path.exists(data[0] + '/' + date):
-    #     os.makedirs(data[0] + '/' + date)
-    #
-    # if not os.path.exists(data[0] + '/' + date + '/mask'):
-    #     os.makedirs(data[0] + '/' + date + '/mask')
-    # if not os.path.exists(data[0] + '/' + date + '/output'):
-    #     os.makedirs(data[0] + '/' + date + '/output')
-    #
-    # metadatapath = data[0] + '/' + date + '/' "metadata.txt"
-    # metadata = open(metadatapath, "w")
+    if not os.path.exists(data[0] + '/' + date):
+        os.makedirs(data[0] + '/' + date)
+
+    if not os.path.exists(data[0] + '/' + date + '/mask'):
+        os.makedirs(data[0] + '/' + date + '/mask')
+    if not os.path.exists(data[0] + '/' + date + '/output'):
+        os.makedirs(data[0] + '/' + date + '/output')
+
+    metadatapath = data[0] + '/' + date + '/' "metadata.txt"
+    mode = 'a' if os.path.isfile(metadatapath) else 'w'
+    metadata = open(metadatapath, mode)
 
     background = cv2.imread(background_path)
     _house = cv2.imread(house_path)
@@ -257,17 +258,18 @@ def generate(parameters):
             houses_big[:, :, i] = houses_big[:, :, i] * (output_mask/255)
 
         output = output + houses_big
-        # _, output_mask = cv2.threshold(output_mask,127,255,cv2.THRESH_BINARY)
+        _, output_mask = cv2.threshold(output_mask,127,255,cv2.THRESH_BINARY)
 
-        cv2.imshow('output', output)
-        cv2.waitKey()
-        cv2.destroyAllWindows()
+        # cv2.imshow('output', output)
+        # cv2.waitKey()
+        # cv2.destroyAllWindows()
 
-        # outpath = data[0] + '/' + date + '/output/' + data[1] + '-out' + str(n) + '.' + outpath_[-1]
-        # maskpath = data[0] + '/' + date + '/mask/' + data[1] + '-out' + str(n) + '-mask' + '.' + outpath_[-1]
-        #
-        # cv2.imwrite(outpath, output)
-        # cv2.imwrite(maskpath, output_white_mask if '-m' in parameters else output_mask)
+        house_path_ = (house_path.split('.')[0]).split('/')[-1]
+        outpath = data[0] + '/' + date + '/output/' + data[1] + '+' + house_path_ + '-out' + str(n) + '.' + outpath_[-1]
+        maskpath = data[0] + '/' + date + '/mask/' + data[1] + '+' + house_path_ + '-out' + str(n) + '-mask' + '.' + outpath_[-1]
+
+        cv2.imwrite(outpath, output)
+        cv2.imwrite(maskpath, output_white_mask if '-m' in parameters else output_mask)
 
         _, thresh = cv2.threshold(255-output_mask, 127, 255, 0)
         img = cv2.bitwise_not(thresh)
@@ -278,7 +280,7 @@ def generate(parameters):
         # print("# groups of houses: " + str(n_houses))
         # print("# of houses: " + str(np.amax(markers)))
 
-        # metadata.write(outpath.split('/' + date + '/')[-1] + ' ' + maskpath.split('/' + date + '/')[-1] + ' ' + str(np.amax(markers)) + '\n')
+        metadata.write(outpath.split('/' + date + '/')[-1] + ' ' + maskpath.split('/' + date + '/')[-1] + ' ' + str(np.amax(markers)) + '\n')
 
 
     pass
@@ -295,6 +297,7 @@ def switch(command, arg):
         '-m': {'-m': arg},
         '-hf': {'-hf': arg},
         '-bf': {'-bf': arg},
+        '-date': {'-date': arg},
         '-help': {'-l': "number of outputs (def.: 10)",
                   '-h': "number of houses (def.: random)",
                   '-d': "battery shape dimensions (write NNxMM) (if 0x0 adjusts to background; def.: random)",
@@ -303,6 +306,7 @@ def switch(command, arg):
                   '-m': "output mask for input house(s) or mask for each house (def.: for each house)",
                   '-hf': "input house file (pass 1 filename) (def. data/casa1.png)",
                   '-bf': "input background file (pass 1 filename) (def. data/refugee_camp_before_data.jpg)",
+                  '-date': "enter the date. mandatory.",
                   '-help': "help"
                   }
     }
@@ -318,6 +322,8 @@ if __name__ == '__main__':
     commands = [a for a in sys.argv if '-' in a]
     if "-help" in commands:
         printOptions()
+    elif "-date" not in commands:
+        print("the date is mandatory")
     else:
         for command in commands:
             if len(sys.argv) - sys.argv.index(command)-1 <= 0:
