@@ -6,6 +6,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as f
 
 import random
 import time
@@ -14,15 +15,30 @@ import time
 
 import cv2
 from glob import glob
+from tqdm import tqdm
+
+TRAIN_FOLDER = 'data/201811211823'
+VALID_FOLDER = 'data/201811211823'
+
+BATCH_SIZE = 10
+
+N_EPOCHS = 10000
+
+LR = 0.01
 
 class DataLoader:
-    def __init__(self, pattern, shuffle=False):
+    def __init__(self, metadata_path, device, shuffle=False):
 
-        self.paths_iterator = (glob(pattern))
+        self.subpath = '/'.join(metadata_path.split('/')[:-1])
+
+        self.metadata = [x[:-1].split(' ') for x in open(metadata_path)]
+
+        self.device = device
         if shuffle:
-            random.shuffle(self.paths_iterator)
+            random.shuffle(self.metadata)
 
-        self.paths_iterator = iter(self.paths_iterator)
+    def get_len(self):
+        return len(self.metadata)
 
 
     def get_batch(self, size):
@@ -30,23 +46,27 @@ class DataLoader:
         src_batch = -1
         tgt_batch = -1
 
-
-        for i, x in enumerate(self.paths_iterator):
+        for i, x in enumerate(self.metadata):
 
             if i == 0:
-                tgt_batch = torch.from_numpy(cv2.imread(x, 0) / 255).float().unsqueeze(0).unsqueeze(0).float()
-
-                srcim = x.replace('-mask', '')
-                src_batch = torch.from_numpy(cv2.imread(srcim) / 255).permute(2, 0,1).unsqueeze(0).float()
+                # print(x)
+                path = self.subpath + '/' +x[1]
+                tgt_batch = torch.from_numpy(cv2.imread(path, 0) / 255).float().unsqueeze(0).unsqueeze(0)
+                tgt_batch = tgt_batch.to(self.device)
+                path = self.subpath + '/' + x[0]
+                src_batch = torch.from_numpy(cv2.imread(path) / 255).permute(2, 0, 1).unsqueeze(0).float()
+                src_batch = src_batch.to(self.device)
+                self.metadata = self.metadata[1:]
 
             else:
-
-                tgtim = torch.from_numpy(cv2.imread(x, 0) / 255).float().unsqueeze(0).unsqueeze(0)
-                srcim = x.replace('-mask', '')
-                srcim = torch.from_numpy(cv2.imread(srcim) / 255).permute(2, 0,1).unsqueeze(0).float()
-
-                tgt_batch = torch.cat((tgt_batch, tgtim))
+                path = self.subpath + '/' +x[1]
+                tgt_value = torch.from_numpy(cv2.imread(path, 0) / 255).float().unsqueeze(0).unsqueeze(0)
+                tgt_value = tgt_value.to(self.device)
+                srcim = torch.from_numpy(cv2.imread(self.subpath + '/' + x[0]) / 255).permute(2, 0,1).unsqueeze(0).float()
+                srcim = srcim.to(self.device)
+                tgt_batch = torch.cat((tgt_batch, tgt_value))
                 src_batch = torch.cat((src_batch, srcim))
+                self.metadata = self.metadata[1:]
 
             if i == size - 1:
                 break
@@ -59,6 +79,36 @@ class DataLoader:
 class Autoencoder(nn.Module):
     def __init__(self):
         super(Autoencoder, self).__init__()
+
+        self.layer1 = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU())
+        self.layer2 = nn.Sequential(
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU())
+        self.layer3 = nn.Sequential(
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            # nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+        self.layer4 = nn.Sequential(
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU())
+        self.layer5 = nn.Sequential(
+            nn.Conv2d(32, 32, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU())
+        self.layer6 = nn.Sequential(
+            nn.Conv2d(32, 1, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(1),
+            nn.ReLU(),
+            # nn.MaxPool2d(kernel_size=2, stride=2)
+        )
+
 
         self.max22 = nn.MaxPool2d(2, 2)
         self.relu = nn.ReLU()
@@ -80,7 +130,7 @@ class Autoencoder(nn.Module):
         self.conv2_2 = nn.Conv2d(8, 8, 3)
         self.conv2_3 = nn.Conv2d(8, 8, 3)
 
-        self.conv2_4 = nn.Conv2d(8, 4, 3)
+        self.conv2_4 = nn.Conv2d(12, 4, 3)
         # self.conv2_4 = nn.Conv2d(4, 4, 3)
         self.conv2_5 = nn.Conv2d(4, 4, 3)
         self.conv2_6 = nn.Conv2d(4, 1, 3)
@@ -95,15 +145,15 @@ class Autoencoder(nn.Module):
 
         # print('input energy', self.loss_mse(inp, torch.zeros(inp.size())))
         # Encoder
-        out = self.conv1_1(inp)
-        out = self.relu(out)
-        out = self.conv1_2(out)
+        # out = self.conv1_1(inp)
+        # out = self.relu(out)
+        # out = self.conv1_2(out)
         # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
 
-        out = self.relu(out)
-        out = self.conv1_3(out)
-        out1 = self.relu(out)
-        out = self.max22(out1)
+        # out = self.relu(out)
+        # out = self.conv1_3(out)
+        # out1 = self.relu(out)
+        # out = self.max22(out1)
         # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
         # out = self.conv1_4(out)
         # out = self.relu(out)
@@ -111,16 +161,16 @@ class Autoencoder(nn.Module):
         # out = self.relu(out)
         # out = self.conv1_6(out)
         # out = self.relu(out)
-        #
+
         # out = self.max22(out)
-        #
+
         # out = self.conv1_7(out)
         # out = self.relu(out)
         # out = self.conv1_8(out)
         # out = self.relu(out)
-        #
+
         # out = self.upsample1(out)
-        #
+
         # out = self.conv2_1(out)
         # out = self.relu(out)
         # out = self.conv2_2(out)
@@ -128,22 +178,33 @@ class Autoencoder(nn.Module):
         # out = self.conv2_3(out)
         # out = self.relu(out)
 
-        out = self.upsample2(out)
+        # out = self.upsample2(out)
         # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
-        out1 = self.upsample2(out1)
-
-        out = torch.cat((out, out1), 1)
-        out = self.conv2_4(out)
-        out = self.relu(out)
+        # out1 = self.upsample2(out1)
+        #print(out.size())
+        #print(out1.size())
+        # out = torch.cat((out, out1), 1)
+        #print(out.size())
+        #quit()
+        # out = self.conv2_4(out)
+        # out = self.relu(out)
         # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
-        out = self.conv2_5(out)
-        out = self.relu(out)
+        # out = self.conv2_5(out)
+        # out = self.relu(out)
         # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
-        out = self.conv2_6(out)
+        # out = self.conv2_6(out)
         # print('input energy', self.loss_mse(out, torch.zeros(out.size())))
         # out = self.relu(out)
         # print('out size', out.size())
-        out = self.sm2d(out)
+        # out = self.sm2d(out)
+        
+        out = self.layer1(inp)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        out = self.layer5(out)
+        out = self.layer6(out)
+         
         return out
 
 def showTensor(tensor):
@@ -155,59 +216,99 @@ def showTensor(tensor):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+def error(prediction, target):
+
+    # return torch.mean(torch.abs(prediction - target)/target)
+    return torch.mean(torch.abs(prediction - target))
+
+def validate(model, metadata_path, device):
+
+    dataloader = DataLoader(metadata_path, device)
+    src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
+    tgt_batch /= 1000
+
+    err = torch.tensor(0).float().to(device)
+    n = 0
+
+    while type(src_batch) != type(-1):
+        with torch.no_grad():
+            prediction = model(src_batch)
+
+        err += error(prediction, tgt_batch)
+        n += 1
+        src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
+        tgt_batch /= 1000
+
+        optimizer.zero_grad()
+
+    del src_batch
+    del tgt_batch
+    del dataloader
+
+    return err/n
+
 
 if __name__ == '__main__':
 
-    start = time.time()
-
-
-    N_EPOCHS = 20
-    BATCH_SIZE = 15
-
-    pattern = "data/refugee-camp-before-data-out*-mask.jpg"
-
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    print(device)
-    autoenc = Autoencoder().to(device)
+    print('device', device)
+    model = Autoencoder().to(device)
 
     loss_mse = nn.MSELoss()
-    # loss_mse = nn.BCELoss()
 
-    optimizer = optim.SGD(autoenc.parameters(), lr=0.5, momentum=0.5)
+    optimizer = optim.SGD(model.parameters(), lr=LR, momentum=0.9)
 
-    for e in range(N_EPOCHS):
+    train_metadata_path = TRAIN_FOLDER + '/metadata.txt'
+    valid_metadata_path = VALID_FOLDER + '/metadata.txt'
 
-        data_loader = DataLoader(pattern, shuffle=True)
+    start_time = time.time()
 
-        src_batch, tgt_batch = data_loader.get_batch(BATCH_SIZE)
+    for i in (range(N_EPOCHS)):
+
+        dataloader = DataLoader(train_metadata_path, device, shuffle=True)
+
+        pbar = tqdm(total=dataloader.get_len())
+
+        src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
+        tgt_batch = tgt_batch
+        with torch.no_grad():
+            err = torch.tensor(0).float().to(device)
+        n = 0
 
         while type(src_batch) != type(-1):
-
-            # print('tgt batch', tgt_batch.size())
-            # print('src batch', src_batch.size())
-
-            prediction = autoenc(src_batch)
-
-            # showTensor(tgt_batch[0])
-            # showTensor(prediction[0])
-            # quit()
+            prediction = model(src_batch)
 
             loss = loss_mse(prediction, tgt_batch)
+            err += error(prediction, tgt_batch)
+            n += 1
 
             optimizer.zero_grad()
 
             loss.backward()
 
-            # optimizer.step()
+            optimizer.step()
 
-            src_batch, tgt_batch = data_loader.get_batch(BATCH_SIZE)
+            src_batch, tgt_batch = dataloader.get_batch(BATCH_SIZE)
 
-        print('epoch n: ' + str(e + 1) + '  loss:' + str(loss.item()))
+            pbar.update(BATCH_SIZE)
 
-        cp_name = 'models/autoencoder-epoch' + str(e+1) + '.pt'
+        del src_batch
+        del tgt_batch
+        del dataloader
+
+        valid_error = validate(model, valid_metadata_path, device)
+        print(('epoch n: ' + str(i + 1)))
+        print('train MSE:' + str((err / n).item()).format())
+        print('valid MSE:' + str((valid_error).item()))
+        print('loss: ' + str(loss.item()))
+
+        elapsed = time.time() - start_time
+        # print('time spent: ' + str(elapsed) + '  time remaining: ' + str(elapsed/(i+1)*N_EPOCHS-elapsed))
+        cp_name = 'models/autoencoder1.pt'
         print('Saving checkpoint to: ' + cp_name)
-        torch.save(autoenc, cp_name)
+        torch.save(model, cp_name)
+    print('trained with 5000, eval with 1000')
+    cp_name = 'models/autoencoder1.pt'
+    print('Saving checkpoint to: ' + cp_name)
+    torch.save(model, cp_name)
 
-    end = time.time()
-
-    print ('Total time elapsed:', end-start)
