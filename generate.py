@@ -105,7 +105,7 @@ def getHouses(parameters):
     houses = np.zeros((np.uint32(biggest_area[0]*np.amax(dim)*2), np.uint32(biggest_area[1]*len(dim)*2), 3), np.uint8)
     masks = np.zeros((np.uint32(biggest_area[0]*np.amax(dim)*2), np.uint32(biggest_area[1]*len(dim)*2)), np.uint8)
     if '-m' in parameters:
-        white_masks = np.ones((np.uint32(biggest_area[0]*np.amax(dim)*2), np.uint32(biggest_area[1]*len(dim)*2)), np.uint8)*255
+        white_masks = masks.copy()
     maximum = [0, 0]
     _maximum = [0, 0]
     i = 0
@@ -115,6 +115,8 @@ def getHouses(parameters):
         for column in range(np.uint8(dim[row])):
             _house = cv2.imread(pathForHouses[i])
             _mask = cv2.imread(pathForMasks[i], cv2.IMREAD_GRAYSCALE)
+            if '-m' in parameters:
+                _white_mask = np.ones(_mask.shape, np.uint8)*255
             if '-s' in parameters and float(parameters.get('-s'))*max(_house.shape[0], _house.shape[1]) < max(background.shape[0], background.shape[1]):
                 relation = float(parameters.get('-s'))
             else:
@@ -122,7 +124,7 @@ def getHouses(parameters):
             house = cv2.resize(_house, (0,0), fx=relation, fy=relation)
             mask = cv2.resize(_mask, (0,0), fx=relation, fy=relation)
             if '-m' in parameters:
-                white_mask = cv2.resize(white_masks, (0,0), fx=relation, fy=relation)
+                white_mask = cv2.resize(_white_mask, (0,0), fx=relation, fy=relation)
 
             _maximum[0] = maximum[0] + house.shape[0] + 5
             houses[maximum[0]+5 : _maximum[0], _maximum[1]+5 : _maximum[1]+house.shape[1]+5] = house
