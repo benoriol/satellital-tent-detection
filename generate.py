@@ -105,7 +105,7 @@ def getHouses(parameters):
     houses = np.zeros((np.uint32(biggest_area[0]*np.amax(dim)*2), np.uint32(biggest_area[1]*len(dim)*2), 3), np.uint8)
     masks = np.zeros((np.uint32(biggest_area[0]*np.amax(dim)*2), np.uint32(biggest_area[1]*len(dim)*2)), np.uint8)
     if '-m' in parameters:
-        white_masks = masks.copy()
+        white_masks = np.ones((np.uint32(biggest_area[0]*np.amax(dim)*2), np.uint32(biggest_area[1]*len(dim)*2)), np.uint8)*255
     maximum = [0, 0]
     _maximum = [0, 0]
     i = 0
@@ -122,13 +122,13 @@ def getHouses(parameters):
             house = cv2.resize(_house, (0,0), fx=relation, fy=relation)
             mask = cv2.resize(_mask, (0,0), fx=relation, fy=relation)
             if '-m' in parameters:
-                white_mask = cv2.resize(white_mask, (0,0), fx=relation, fy=relation)
+                white_mask = cv2.resize(white_masks, (0,0), fx=relation, fy=relation)
 
             _maximum[0] = maximum[0] + house.shape[0] + 5
             houses[maximum[0]+5 : _maximum[0], _maximum[1]+5 : _maximum[1]+house.shape[1]+5] = house
             masks[maximum[0]+5 : _maximum[0], _maximum[1]+5 : _maximum[1]+house.shape[1]+5] = mask
             if '-m' in parameters:
-                white_masks[max[0]+5 : _maximum[0], _maximum[1]+5 : _maximum[1]+house.shape[1]+5] = white_mask
+                white_masks[maximum[0]+5 : _maximum[0], _maximum[1]+5 : _maximum[1]+house.shape[1]+5] = white_mask
             maximum[0] = _maximum[0]
             maximum[1] = _maximum[1]+house.shape[1]+5 if _maximum[1]+house.shape[1]+5 > maximum[1] else maximum[1]
             i = i + 1
