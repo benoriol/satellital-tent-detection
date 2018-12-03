@@ -12,14 +12,16 @@ import cv2
 from glob import glob
 from tqdm import tqdm
 
-TRAIN_FOLDER = 'data/201811211823'
-VALID_FOLDER = 'data/201811211823'
+TRAIN_FOLDER = 'data/201811261510'
+VALID_FOLDER = 'data/201811261510'
 
 BATCH_SIZE = 10
 
 N_EPOCHS = 10000
 
 LR = 0.01
+
+BATCH_SHAPE = (600, 600)
 
 class DataLoader:
     def __init__(self, metadata_path, device, shuffle=False):
@@ -45,19 +47,31 @@ class DataLoader:
 
             if i == 0:
                 # print(x)
-                path = self.subpath + '/' +x[1]
-                tgt_batch = torch.from_numpy(cv2.imread(path, 0) / 255).float().unsqueeze(0).unsqueeze(0)
+                path = self.subpath + '/' + x[1]
+                tgt_batch = cv2.imread(path, 0)
+                tgt_batch = cv2.resize(tgt_batch, BATCH_SHAPE, interpolation=cv2.INTER_CUBIC) / 255
+                tgt_batch = torch.from_numpy(tgt_batch).float().unsqueeze(0).unsqueeze(0)
                 tgt_batch = tgt_batch.to(self.device)
+
                 path = self.subpath + '/' + x[0]
-                src_batch = torch.from_numpy(cv2.imread(path) / 255).permute(2, 0, 1).unsqueeze(0).float()
+                src_batch = cv2.imread(path)
+                src_batch = cv2.resize(src_batch, BATCH_SHAPE, interpolation=cv2.INTER_CUBIC) / 255
+                src_batch = torch.from_numpy(src_batch).permute(2, 0, 1).unsqueeze(0).float()
                 src_batch = src_batch.to(self.device)
                 self.metadata = self.metadata[1:]
 
             else:
-                path = self.subpath + '/' +x[1]
-                tgt_value = torch.from_numpy(cv2.imread(path, 0) / 255).float().unsqueeze(0).unsqueeze(0)
+                path = self.subpath + '/' + x[1]
+                tgt_value = cv2.imread(path, 0)
+                tgt_value = cv2.resize(tgt_value, BATCH_SHAPE, interpolation=cv2.INTER_CUBIC) / 255
+                tgt_value = torch.from_numpy(tgt_value).float().unsqueeze(0).unsqueeze(0)
                 tgt_value = tgt_value.to(self.device)
-                srcim = torch.from_numpy(cv2.imread(self.subpath + '/' + x[0]) / 255).permute(2, 0,1).unsqueeze(0).float()
+
+                path = self.subpath + '/' + x[0]
+                srcim = cv2.imread(path)
+                srcim = cv2.resize(srcim, BATCH_SHAPE, interpolation=cv2.INTER_CUBIC) / 255
+
+                srcim = torch.from_numpy(srcim).permute(2, 0, 1).unsqueeze(0).float()
                 srcim = srcim.to(self.device)
                 tgt_batch = torch.cat((tgt_batch, tgt_value))
                 src_batch = torch.cat((src_batch, srcim))
