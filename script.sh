@@ -34,7 +34,7 @@
 
   # CASA5.JPG millor no
   # ORIGINAL.PNG
-  # python generate.py -hf data/original.png -bf data/refugee_camp_before_data.jpg -date $dt -l $l -r 80 -s 1.2 -d 20x5
+  python generate.py -hf data/original.png -bf data/refugee_camp_before_data.jpg -date $dt -l $l -r 80 -s 1.2 -d 20x5
   # python generate.py -hf data/original.png -bf data/Desert1.png -date $dt -l $l
   # python generate.py -hf data/original.png -bf data/Desert2.png -date $dt -l $l
   # python generate.py -hf data/original.png -bf data/Desert3.png -date $dt -l $l
