@@ -12,8 +12,11 @@ import cv2
 from glob import glob
 from tqdm import tqdm
 
-TRAIN_FOLDER = 'data/201811261510'
-VALID_FOLDER = 'data/201811261510'
+from PIL import Image
+import numpy as np
+
+TRAIN_FOLDER = 'data/201812091517'
+VALID_FOLDER = 'data/201812091527'
 
 BATCH_SIZE = 10
 
@@ -48,13 +51,19 @@ class DataLoader:
             if i == 0:
                 # print(x)
                 path = self.subpath + '/' + x[1]
+
+
                 tgt_batch = cv2.imread(path, 0)
-                tgt_batch = cv2.resize(tgt_batch, BATCH_SHAPE, interpolation=cv2.INTER_CUBIC) / 255
+                tgt_batch = tgt_batch/255
+                # tgt_batch = Image.open(path)
+                # tgt_batch = np.array(tgt_batch, dtype='float')
+                tgt_batch = cv2.resize(tgt_batch, BATCH_SHAPE, interpolation=cv2.INTER_CUBIC)
                 tgt_batch = torch.from_numpy(tgt_batch).float().unsqueeze(0).unsqueeze(0)
                 tgt_batch = tgt_batch.to(self.device)
 
                 path = self.subpath + '/' + x[0]
                 src_batch = cv2.imread(path)
+                # src_batch = src_batch/255
                 src_batch = cv2.resize(src_batch, BATCH_SHAPE, interpolation=cv2.INTER_CUBIC) / 255
                 src_batch = torch.from_numpy(src_batch).permute(2, 0, 1).unsqueeze(0).float()
                 src_batch = src_batch.to(self.device)
