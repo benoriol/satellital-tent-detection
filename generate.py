@@ -16,18 +16,21 @@ def paths(parameters):
     pathForBackground = parameters.get('-bf') if '-bf' in parameters else 'data/refugee_camp_before_data.jpg'
     pathForMasks = [""]
     if '-hf' in parameters:
+
         if os.path.isfile(parameters.get('-hf')) and isImage(parameters.get('-hf')):
+            paths = [parameters.get('-hf').split('/')[-2] + '/' + file for file in os.listdir(parameters.get('-hf').split('/')[-2])]
             pathForHouses = [parameters.get('-hf')]
-            pathForMasks = [pathForHouses[0].replace('.', '-mask.') if os.path.isfile(pathForHouses[0].replace('.', '-mask.')) else pathForHouses[0]]
+            pathForMasks = pathForHouses.copy()
+            index = [a for a, s in enumerate(paths) if pathForHouses[0].split('/')[-1].split('.')[-2] + '-mask' in s]
+            pathForMasks[0] = paths[index[0]]
         elif os.path.isdir(parameters.get('-hf')):
+            paths = [parameters.get('-hf') + '/' + file for file in os.listdir(parameters.get('-hf'))]
             _pathForHouses = [parameters.get('-hf') + '/' + file for file in os.listdir(parameters.get('-hf')) if (os.path.isfile(parameters.get('-hf')+'/'+file) and "mask" not in file)]
             pathForHouses = [path for path in _pathForHouses if isImage(path)]
             pathForMasks = pathForHouses.copy()
-            paths = [parameters.get('-hf') + '/' + file for file in os.listdir(parameters.get('-hf'))]
             for i in range(len(pathForHouses)):
                 index = [a for a, s in enumerate(paths) if pathForHouses[i].split('.')[-2] + '-mask' in s]
                 pathForMasks[i] = paths[index[0]]
-
         else:
             return
     else:
@@ -52,7 +55,7 @@ def dimensions(numberofhouses):
 
     return np.trim_zeros(dimension)
 
-def crop(image):
+def crop(image, margin):
 
     x0 = 0
     x1 = image.shape[0] - 1
@@ -60,7 +63,7 @@ def crop(image):
     y0 = 0
     y1 = image.shape[1] - 1
 
-    for x in range(x1+1):
+    for x in range(x1 + 1):
         if x0 == 0 and np.sum(image[x]) != 0:
             x0 = x
 
@@ -79,6 +82,11 @@ def crop(image):
 
         if y0 != 0 and y1 != image.shape[1]-1 and x0 != 0 and x1 != image.shape[0]-1:
             break
+
+    x0 = math.floor(min([i for i in np.arange(x0-margin-0.5, x0, 0.5) if i >= 0]))
+    y0 = math.floor(min([i for i in np.arange(y0-margin-0.5, y0, 0.5) if i >= 0]))
+    x1 = math.floor(max([i for i in np.arange(x1, x1+margin+0.5, 0.5) if i < image.shape[0]]))
+    y1 = math.floor(max([i for i in np.arange(y1, y1+margin+0.5, 0.5) if i < image.shape[1]]))
     return [x0, x1, y0, y1]
 
 def getHouses(parameters):
@@ -102,8 +110,11 @@ def getHouses(parameters):
             biggest_area = [house_shape[0], house_shape[1]]
 
     dim = dimensions(len(pathForHouses)) # number of rows is .count, number of columns/row is dimensions[row]
-    houses = np.zeros((np.uint32(biggest_area[0]*np.amax(dim)*2), np.uint32(biggest_area[1]*len(dim)*2), 3), np.uint8)
-    masks = np.zeros((np.uint32(biggest_area[0]*np.amax(dim)*2), np.uint32(biggest_area[1]*len(dim)*2)), np.uint8)
+    margin = 5
+    if '-margin' in parameters:
+        margin = np.uint8(parameters.get('-margin'))
+    houses = np.zeros((np.uint32((biggest_area[0]+margin)*np.amax(dim)*2), np.uint32((biggest_area[1]+margin)*len(dim)*2), 3), np.uint8)
+    masks = np.zeros((np.uint32((biggest_area[0]+margin)*np.amax(dim)*2), np.uint32((biggest_area[1]+margin)*len(dim)*2)), np.uint8)
     if '-m' in parameters:
         white_masks = masks.copy()
     maximum = [0, 0]
@@ -115,6 +126,7 @@ def getHouses(parameters):
         for column in range(np.uint8(dim[row])):
             _house = cv2.imread(pathForHouses[i])
             _mask = cv2.imread(pathForMasks[i], cv2.IMREAD_GRAYSCALE)
+
             if '-m' in parameters:
                 _white_mask = np.ones(_mask.shape, np.uint8)*255
             if '-s' in parameters and float(parameters.get('-s'))*max(_house.shape[0], _house.shape[1]) < max(background.shape[0], background.shape[1]):
@@ -126,19 +138,20 @@ def getHouses(parameters):
             if '-m' in parameters:
                 white_mask = cv2.resize(_white_mask, (0,0), fx=relation, fy=relation)
 
-            _maximum[0] = maximum[0] + house.shape[0] + 5
-            houses[maximum[0]+5 : _maximum[0], _maximum[1]+5 : _maximum[1]+house.shape[1]+5] = house
-            masks[maximum[0]+5 : _maximum[0], _maximum[1]+5 : _maximum[1]+house.shape[1]+5] = mask
+            _maximum[0] = maximum[0] + house.shape[0] + margin
+            houses[maximum[0]+margin : _maximum[0], _maximum[1]+margin : _maximum[1]+house.shape[1]+margin] = house
+            masks[maximum[0]+margin : _maximum[0], _maximum[1]+margin : _maximum[1]+house.shape[1]+margin] = mask
             if '-m' in parameters:
-                white_masks[maximum[0]+5 : _maximum[0], _maximum[1]+5 : _maximum[1]+house.shape[1]+5] = white_mask
+                white_masks[maximum[0]+margin : _maximum[0], _maximum[1]+margin : _maximum[1]+house.shape[1]+margin] = white_mask
             maximum[0] = _maximum[0]
-            maximum[1] = _maximum[1]+house.shape[1]+5 if _maximum[1]+house.shape[1]+5 > maximum[1] else maximum[1]
+            maximum[1] = _maximum[1]+house.shape[1]+margin if _maximum[1]+house.shape[1]+margin > maximum[1] else maximum[1]
             i = i + 1
         _maximum[1] = maximum[1]
 
-    x0, x1, y0, y1 = crop(masks)
+    x0, x1, y0, y1 = crop(masks, margin)
     final_houses = houses[x0:x1, y0:y1]
-    final_masks = masks[x0:x1, y0:y1]
+    _, thresh = cv2.threshold(255-masks[x0:x1, y0:y1], 127, 255, 0)
+    final_masks = cv2.bitwise_not(thresh)
     final_white_masks = white_masks[x0:x1, y0:y1] if '-m' in parameters else None
 
     return final_houses, final_masks, final_white_masks
@@ -194,24 +207,52 @@ def generate(parameters):
                 _dimensions = np.uint32(dimensions.split('x'))
             battery_shape = _dimensions.copy() # shape of the houses disposition
         else:
-            battery_shape[0] = random.choice(range(0, max_houses_width))+1
-            battery_shape[1] = random.choice(range(0, max_houses_height))+1
+            battery_shape[0] = random.choice(range(math.floor(max_houses_width/2), max_houses_width))+1
+            battery_shape[1] = random.choice(range(math.floor(max_houses_height/2), max_houses_height))+1
         possible_positions = []
-        for x in range(battery_shape[0]):
-            for y in range(battery_shape[1]):
-                possible_positions.append([x, y])
+        x = 0
+        if battery_shape[0] <= 3 and battery_shape[1] <= 3:
+            for x in range(battery_shape[0]):
+                for y in range(battery_shape[1]):
+                    possible_positions.append([x, y])
+        else:
+            while x < battery_shape[0]:
+                y = random.choice([0, 1, 2])
+                while y < battery_shape[1]:
+                    possible_positions.append([x, y])
+                    y = y + 1
+                x = x + random.choice([1, 2])
         positions = []
 
         # let's decide
         n_houses = np.uint32(parameters.get('-h')) if '-h' in parameters else None
         if n_houses == None:
-            n_houses = random.choice(range(0, battery_shape[0]*battery_shape[1]))+1
-        elif n_houses > battery_shape[0]*battery_shape[1]:
-            n_houses = battery_shape[0]*battery_shape[1]-1
-        for x in range(n_houses):
-            p = random.choice(possible_positions)
-            positions.append(p)
-            possible_positions.remove(p)
+            n_houses = random.choice(range(math.floor(len(possible_positions)/2), len(possible_positions)))+1
+        elif n_houses > len(possible_positions):
+            n_houses = len(possible_positions)
+        x = 0
+        while x < n_houses:
+            p = random.randint(0, len(possible_positions)-1)
+            positions.append(possible_positions[p])
+            possible_positions.remove(possible_positions[p])
+            x = x + 1
+
+            rand = random.choice(range(0, 100))
+            if rand > 25 and x < n_houses and p+1 < len(possible_positions)-1:
+                if possible_positions[p][0] == possible_positions[p+1][0] and possible_positions[p][1]+1 == possible_positions[p+1][1]:
+                    positions.append(possible_positions[p+1])
+                    possible_positions.remove(possible_positions[p+1])
+                    x = x + 1
+            if rand > 50 and x < n_houses and p+2 < len(possible_positions)-1:
+                if possible_positions[p+1][0] == possible_positions[p+2][0] and possible_positions[p+1][1]+1 == possible_positions[p+2][1]:
+                    positions.append(possible_positions[p+1])
+                    possible_positions.remove(possible_positions[p+1])
+                    x = x + 1
+            if rand > 75 and x < n_houses and p+3 < len(possible_positions)-1:
+                if possible_positions[p+2][0] == possible_positions[p+3][0] and possible_positions[p+2][1]+1 == possible_positions[p+3][1]:
+                    positions.append(possible_positions[p+1])
+                    possible_positions.remove(possible_positions[p+1])
+                    x = x + 1
 
         # let's assign
         houses = np.zeros((battery_shape[0]*house.shape[0], battery_shape[1]*house.shape[1], 3), np.uint8)
@@ -259,7 +300,7 @@ def generate(parameters):
             aux_white_mask_rotated = cv2.warpAffine(aux_white_mask, M, (diagonal*2, diagonal*2))
 
         # Getting the part of the image with houses
-        x0, x1, y0, y1 = crop(mask_rotated)
+        x0, x1, y0, y1 = crop(mask_rotated, 0)
 
         cut_rotated = rotated[x0:x1, y0:y1]
         cut_mask = mask_rotated[x0:x1, y0:y1]
@@ -337,6 +378,7 @@ def switch(command, arg):
         '-hf': {'-hf': arg},
         '-bf': {'-bf': arg},
         '-date': {'-date': arg},
+        '-margin': {'-margin': arg},
         '-help': {'-l': "number of outputs (def.: 10)",
                   '-h': "number of houses (def.: random)",
                   '-d': "battery shape dimensions (write NNxMM) (if 0x0 adjusts to background; def.: random)",
@@ -346,6 +388,7 @@ def switch(command, arg):
                   '-hf': "input house file (pass 1 filename or 1 folder) (def. data/casa1.png)",
                   '-bf': "input background file (pass 1 filename) (def. data/refugee_camp_before_data.jpg)",
                   '-date': "enter the date. mandatory.",
+                  '-margin': "margin (in px) from one block to another (def. 5px)",
                   '-help': "help"
                   }
     }
