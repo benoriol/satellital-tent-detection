@@ -1,3 +1,8 @@
+"""
+@author: Benet Oriol
+@license: MIT-license
+"""
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -128,14 +133,14 @@ class Autoencoder(nn.Module):
         )
 
     def forward(self, inp):
-        
+
         out = self.layer1(inp)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
         out = self.layer5(out)
         out = self.layer6(out)
-         
+
         return out
 
 def showTensor(tensor):
@@ -244,4 +249,3 @@ if __name__ == '__main__':
     cp_name = 'models/autoencoder1.pt'
     print('Saving checkpoint to: ' + cp_name)
     torch.save(model, cp_name)
-

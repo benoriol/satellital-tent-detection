@@ -1,8 +1,13 @@
+"""
+@author: Mar Balibrea
+@license: MIT-license
+This file contains auxiliar functionalities for generate.py
+"""
+
 import cv2
 import numpy as np
 import math
 import os
-
 
 def isImage(file):
     extensions = ['jpg', 'png', 'gif', 'tiff']

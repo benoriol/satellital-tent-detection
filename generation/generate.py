@@ -1,3 +1,9 @@
+"""
+@author: Mar Balibrea
+@license: MIT-license
+This file contains the main code for generation
+"""
+
 import cv2
 import numpy as np
 import random

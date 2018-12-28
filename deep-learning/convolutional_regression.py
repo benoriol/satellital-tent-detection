@@ -1,3 +1,7 @@
+"""
+@author: Benet Oriol
+@license: MIT-license
+"""
 
 import random
 import torch
@@ -283,5 +287,3 @@ if __name__ == '__main__':
     cp_name = 'models/convregression1-pt'
     print('Saving checkpoint to: ' + cp_name)
     torch.save(model, cp_name)
-
-

@@ -1,3 +1,8 @@
+"""
+@author: Benet Oriol
+@license: MIT-license
+"""
+
 import numpy as np
 import cv2
 from PIL import Image
@@ -96,5 +101,3 @@ if __name__ == '__main__':
 
     print("Accuracy: " + str(acc_err))
     print("Worse case: " + str(worse_err) + "   at image: " + str(worse_case))
-
-

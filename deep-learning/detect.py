@@ -1,3 +1,7 @@
+"""
+@author: Benet Oriol
+@license: MIT-license
+"""
 
 import torch
 from glob import glob
