@@ -1,8 +1,8 @@
 # Satellital tent detection
 The steps to follow for our approach are:
 1. Generating a dataset for image segmentation given background images and foreground images. Applied to satellite image segmentation.
-2. Training ML model for a masking task
-3. Evaluation of the models
+2. Training ML model for a masking task.
+3. Evaluation of the models.
 
 The explanation will be divided in these three parts, starting with generation.
 
@@ -25,8 +25,6 @@ Comments about the use:
 
 This file also relies on the **auxiliar.py** file, which contains additional functionalities.
 Another thing we can do is to input a folder of tents not only one type of tent. To use an example, we have included the folder **data/examples/tents-example** containing a group of tents with their masks respectively.
-
-
 
 **script.sh**
 
