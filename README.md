@@ -1,15 +1,15 @@
 # Satellital tent detection
 The steps to follow for our approach are:
-1. Generating a dataset for image segmentation given background images and foreground images. Applied to satellite image segmentation.
-2. Training ML model for a masking task.
-3. Evaluation of the models.
+1. [Generation of a dataset](#generation)
+2. [Training ML model for a masking task](#training)
+3. [Evaluation of the models](#evaluating)
 
 The explanation will be divided in these three parts, starting with generation.
 
 ## Generation of a dataset
-For this part (included in /generation) there are 2 important files in addition to the **data** folder, which contains the folder **examples**, that includes different backgrounds and tents. The files are the following.
+Generating a dataset for image segmentation given background images and foreground images. Applied to satellite image segmentation. For this part (included in /generation) there are 2 important files in addition to the **data** folder, which contains the folder **examples**, that includes different backgrounds and tents. The files are the following.
 
-**generate.py**
+### generate.py
 
 Here, the main code for generation exists. This is the file used to generate. To get familiar with it you can run the help options (`-help`). Recall that the date is a mandatory parameter.
 
@@ -26,12 +26,11 @@ Comments about the use:
 This file also relies on the **auxiliar.py** file, which contains additional functionalities.
 Another thing we can do is to input a folder of tents not only one type of tent. To use an example, we have included the folder **data/examples/tents-example** containing a group of tents with their masks respectively.
 
-**script.sh**
+### script.sh
 
 Here there is a collection of calls to the last file so that a lot of variation of parameters (like type of tents or backgrounds or rotation, etcetera.) can be made to actually generate a big dataset.
 
 
-
 ## Training ML model for a masking task
 
-## Evaluation of the models
+## Evaluating of the models
