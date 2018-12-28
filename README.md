@@ -1,8 +1,8 @@
 # Satellital tent detection
 The steps to follow for our approach are:
-1. [Generation of a dataset](#generation)
-2. [Training ML model for a masking task](#training)
-3. [Evaluation of the models](#evaluating)
+1. [Generation of a dataset](#generation-of-a-dataset)
+2. [Training ML model for a masking task](#training-ml-model-for-a-masking-task)
+3. [Evaluating the models](#evaluating-the-models)
 
 The explanation will be divided in these three parts, starting with generation.
 
@@ -33,4 +33,4 @@ Here there is a collection of calls to the last file so that a lot of variation 
 
 ## Training ML model for a masking task
 
-## Evaluating of the models
+## Evaluating the models
