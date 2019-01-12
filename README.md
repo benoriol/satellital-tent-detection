@@ -46,7 +46,7 @@ For example, the file **deep-learning/training_data/201812091527/metadata.txt** 
     Validation data folder must have the same structure than the training folder.
     
     
-In this file, you also have the definition of the model. If there, you can costumise the model, training algorithm, batch size, etc...
+In this file, you also have the definition of the model. There, you can costumise the model, training algorithm, batch size, etc...
 It has a DataLoader class which is used to load the data and form the batches.
 
 
@@ -55,7 +55,7 @@ You can train a model or use the one provided in the repo.
 
 Once you have trained a model, you can use it to analyse images. 
 There are to ways to do it: one by one or many at the same time:
-- `detect_one.py` : It requires the model to use (hardcoded) and the image path (first argument). For example:
+- `detect_one.py` : It requires the path tp the model to use (hardcoded) and the image path (first argument). For example:
     
     `python detect_one.py image.png`
     
@@ -66,3 +66,5 @@ The name of the model and the input folder must be hardcoded. For example:
     `python detect.py`
 
 It also has a DataLoader class, used to load data and form batches.
+
+
