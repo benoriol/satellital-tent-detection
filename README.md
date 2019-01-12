@@ -33,4 +33,31 @@ Here there is a collection of calls to the last file so that a lot of variation 
 
 ## Training ML model for a masking task
 
-## Evaluating the models
+In order to train the model the data must be organized in the following way:
+- A folder with an arbitrary name. For example "TrainingFolder"
+- Inside TrainingFolder, there must be a file called metadata.txt which has, at least, two columns that represent input image and target image for each line.
+The columns must be separated in spaces. 
+For example, the file **deep-learning/training_data/201812091527/metadata.txt** contains 3 columns, but only the first two will be rellevant. 
+- Then, you must run 
+
+    `python convolutional_masking.py`
+    
+    Notice that inside this file, you must hardcode some parameters such as training and validation data folder. 
+    Validation data folder must have the same structure than the training folder.
+
+
+## Using the models
+You can train a model or use the one provided in the repo.
+
+Once you have trained a model, you can use it to analyse images. 
+There are to ways to do it: one by one or many at the same time:
+- `detect_one.py` : It requires the model to use (hardcoded) and the image path (first argument). For example:
+    
+    `python detect_one.py image.png`
+    
+- `detect.py` : It can be used to to a analyse multiple images at once (by now, GPU-only).
+Following the same style of the training algorithm, it requires a metadata.txt file, with a column consisting of the paths of the images that must be analysed.
+The name of the model and the input folder must be hardcoded. For example:
+
+    `python detect.py`
+
