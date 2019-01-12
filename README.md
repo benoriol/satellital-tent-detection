@@ -44,6 +44,10 @@ For example, the file **deep-learning/training_data/201812091527/metadata.txt** 
     
     Notice that inside this file, you must hardcode some parameters such as training and validation data folder. 
     Validation data folder must have the same structure than the training folder.
+    
+    
+In this file, you also have the definition of the model. If there, you can costumise the model, training algorithm, batch size, etc...
+It has a DataLoader class which is used to load the data and form the batches.
 
 
 ## Using the models
@@ -61,3 +65,4 @@ The name of the model and the input folder must be hardcoded. For example:
 
     `python detect.py`
 
+It also has a DataLoader class, used to load data and form batches.
