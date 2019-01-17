@@ -18,7 +18,7 @@ def paths(parameters):
     pathForBackground = parameters.get('-bf') if '-bf' in parameters else 'data/examples/background1.jpg'
     pathForMasks = [""]
     if '-hf' in parameters:
-
+        print(os.path)
         if os.path.isfile(parameters.get('-hf')) and isImage(parameters.get('-hf')):
             paths = [parameters.get('-hf').rsplit('/',1)[-2] + '/' + file for file in os.listdir(parameters.get('-hf').rsplit('/',1)[-2])]
             pathForTents = [parameters.get('-hf')]
@@ -34,7 +34,8 @@ def paths(parameters):
                 index = [a for a, s in enumerate(paths) if pathForTents[i].split('.')[-2] + '-mask' in s]
                 pathForMasks[i] = paths[index[0]]
         else:
-            return
+            pathForTents = ['data/examples/tent1.png']
+            pathForMasks = ['data/examples/tent1-mask.png']
     else:
         # Path to foreground pattern
         pathForTents = ['data/examples/tent1.png']

@@ -130,7 +130,7 @@ def generate(parameters):
             if '-m' in parameters:
                 white_mask[x: x+tent.shape[0], y: y+tent.shape[1]] = tent_white_mask
 
-        #now we rotate
+        # now we rotate
         diagonal = np.uint32(np.sqrt(tents.shape[0]*tents.shape[0] + tents.shape[1]*tents.shape[1]))+1
         aux_tents = np.zeros((diagonal*2, diagonal*2, 3), np.uint8)
         aux_mask = np.zeros((diagonal*2, diagonal*2), np.uint8)
@@ -148,16 +148,16 @@ def generate(parameters):
         if angle == None or angle < 0 or angle > 180:
             angle = random.choice(range(0, 180))
 
-        # Definir Rotacio
+        # define rotation
         M = cv2.getRotationMatrix2D((aux_tents.shape[0]/2, aux_tents.shape[1]/2), angle, 1)
 
-        # Affine transformation
+        # affine transformation
         rotated = cv2.warpAffine(aux_tents, M, (diagonal*2, diagonal*2))
         mask_rotated = cv2.warpAffine(aux_mask, M, (diagonal*2, diagonal*2))
         if '-m' in parameters:
             aux_white_mask_rotated = cv2.warpAffine(aux_white_mask, M, (diagonal*2, diagonal*2))
 
-        # Getting the part of the image with tents
+        # getting the part of the image with tents
         x0, x1, y0, y1 = aux.crop(mask_rotated, 0)
 
         cut_rotated = rotated[x0:x1, y0:y1]
