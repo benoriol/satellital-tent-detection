@@ -20,7 +20,7 @@ Let's try an example:
 This would generate 5 images with around 60 tents occupying all the background used. These would output in data/[date]/output, in addition with their masks in data/[date]/mask and a metadata file containing the output path, the mask path and the real number of tents for every image generated. If the `-m` parameter is called or if there is no mask available for a tent, the number of tents will not be truthful.
 
 Comments about the use:
-- The images are expected to be .jpg, .png or .gif.
+- The images are expected to be .jpg or .png.
 - The tent images are expected to have the same name as their masks without including "-mask" (i.e. "tent1.png and tent1-mask.png").
 
 This file also relies on the **auxiliar.py** file, which contains additional functionalities.
