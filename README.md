@@ -11,7 +11,21 @@ Generating a dataset for image segmentation given background images and foregrou
 
 ### generate.py
 
-Here, the main code for generation exists. This is the file used to generate. To get familiar with it you can run the help options (`-help`). Recall that the date is a mandatory parameter.
+Here, the main code for generation exists. This is the file used to generate. To get familiar with it you can run the help options (`-help`). For a brief explanation:
+
+- `-l` : number of outputs (def.: 10)
+- `-h` : number of tents (def.: random)
+- `-d` : battery shape dimensions (area where the tents will be) (write NNxMM) (if 0x0 adjusts to background; def.: random)
+- `-r` : rotation of all the batteries (range 0-180º) (def.: random)
+- `-s` : scale tent factor (how much should the tent image resize before putting it in the background) (def.: 0.8)
+- `-m` : output mask for individual tent(s) or mask for each input tent file (def.: for each tent)
+- `-hf` : input tent file (pass 1 filename or 1 folder) (def. data/examples/tent1.png)
+- `-bf` : input background file (pass 1 filename) (def. data/examples/background1.jpg)
+- `-date` : enter the date.
+- `-margin` : margin (in px) from one block to another (def. 5px)
+- `-help` : help
+
+Recall that the date is a mandatory parameter.
 
 Let's try an example:
 
