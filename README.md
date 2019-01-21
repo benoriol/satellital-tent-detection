@@ -1,4 +1,13 @@
 # Satellital tent detection
+
+##Installation
+
+Works for python 3
+
+1. Clone the repo
+2. `pip install -r requirements.txt`
+3. Install Pytorch from pyorch.org
+
 The steps to follow for our approach are:
 1. [Generation of a dataset](#generation-of-a-dataset)
 2. [Training ML model for a masking task](#training-ml-model-for-a-masking-task)
